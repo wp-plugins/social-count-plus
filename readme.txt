@@ -2,10 +2,10 @@
 Contributors: claudiosanches
 Tags: facebook, twitter, feedburner, counter, widget, shortcode
 Requires at least: 3.2
-Tested up to: 3.3.1
-Stable tag: 1.2
+Tested up to: 3.4.2
+Stable tag: 1.3
 
-Com o Social Count Plus &eacute; poss&iacute;vel realizar a contagem de assinantes de feed (FeedBurner), seguidores do Twitter, f&atilde;s no Facebook, posts publicados e coment&aacute;rios.
+Com o Social Count Plus &eacute; poss&iacute;vel realizar a de seguidores no Twitter, f&atilde;s no Facebook, posts publicados e coment&aacute;rios.
  
 == Description ==
 
@@ -53,6 +53,9 @@ You should have received a copy of the GNU General Public License along with Soc
 Of course, visit [Social Count Plus](http://www.claudiosmweb.com/)
  
 == Changelog ==
+
+= 1.3 =
+* Removido suporte para FeedBurner, pois o Google desativou a [API](https://developers.google.com/feedburner/?hl=pt-BR).
 
 = 1.2 =
 * Versão livre

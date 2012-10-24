@@ -2,9 +2,9 @@
 /*
 Plugin Name: Social Count Plus
 Plugin URI: http://www.claudiosmweb.com/
-Description: Exiba a contagem de assinantes de Feed (FeedBurner), seguidores no Twitter, fãs do Facebook, total de posts e comentários.
+Description: Exiba a contagem de seguidores no Twitter, fãs do Facebook, total de posts e comentários.
 Author: Claudio Sanches
-Version: 1.2
+Version: 1.3
 Author URI: http://www.claudiosmweb.com/
 */
 
@@ -56,12 +56,12 @@ function admin_scp() {
     ?>
     <div class="wrap">
         <div class="icon32" id="icon-options-general"><br /></div>
-        <?php 
+        <?php
         $reset_count = isset($_POST['reset']);
         if($reset_count == 'limpar') {
             delete_transient('fan_count');
             delete_transient('follower_count');
-            delete_transient('feed_count');
+            //delete_transient('feed_count');
             delete_transient('posts_count');
             delete_transient('comments_count');
             ?><div id="message" class="updated fade">
@@ -130,7 +130,7 @@ function update_scp_options() {
         </div><?php
         delete_transient('fan_count');
         delete_transient('follower_count');
-        delete_transient('feed_count');
+        //delete_transient('feed_count');
         delete_transient('posts_count');
         delete_transient('comments_count');
     }
@@ -144,7 +144,7 @@ function update_scp_options() {
 function scp_clear_cache(){
     delete_transient('fan_count');
     delete_transient('follower_count');
-    delete_transient('feed_count');
+    //delete_transient('feed_count');
     delete_transient('posts_count');
     delete_transient('comments_count');
 }
@@ -184,7 +184,7 @@ function print_scp_form() {
     <h3 style="margin:20px 0 -5px;"><?php _e('Instru&ccedil;&otilde;es de uso'); ?></h3>
     <p><?php _e('Antes de exibir o contador em seu site/blog é necessário seguir os seguintes passos:'); ?></p>
     <ul style="list-style:square;padding:0 0 0 30px;">
-        <li><?php _e('Utilize o menu &quot;<a href="options-general.php?page=social-count-plus&pag=config">Configura&ccedil;&otilde;es</a>&quot; para inserir seu ID do FeedBurner, nome de usu&aacute;rio do Twitter, ID de sua p&aacute;gina no Facebook e controlar a exibi&ccedil;&atilde;o de todos os contadores que aparecem no Widget.'); ?></li>
+        <li><?php _e('Utilize o menu &quot;<a href="options-general.php?page=social-count-plus&pag=config">Configura&ccedil;&otilde;es</a>&quot; para inserir nome de usu&aacute;rio do Twitter, ID de sua p&aacute;gina no Facebook e controlar a exibi&ccedil;&atilde;o de todos os contadores que aparecem no Widget.'); ?></li>
         <li><?php _e('Em <a href="options-general.php?page=social-count-plus&pag=design">Design</a> selecione o modelo de widget que deseja exibir.'); ?></li>
         <li><?php _e('Encontre o widget &quot;Social Count Plus&quot; em: Apar&ecirc;ncia &gt; <a href="widgets.php">Widgets</a>. Agora basta arrasta-lo para sua sidebar!'); ?></li>
     </ul>
@@ -200,7 +200,7 @@ if(isset($_GET['pag']) && $_GET['pag'] == 'config') {
         <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=shortcode"><?php _e('Shortcodes e Fun&ccedil;&otilde;es'); ?></a>
     </h2>
     <form action="" method="post">
-        <h3 style="margin:20px 0 -5px;"><?php _e('FeedBurner'); ?></h3>
+        <!-- <h3 style="margin:20px 0 -5px;"><?php _e('FeedBurner'); ?></h3>
         <table class="form-table">
             <tr>
                 <th scope="row"><label for="scp_feed"><?php _e('ID do FeedBurner'); ?></label></th>
@@ -216,7 +216,7 @@ if(isset($_GET['pag']) && $_GET['pag'] == 'config') {
                     <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_feed_no" name="scp_show_feed" value="false" <?php if ($default_show_feed == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
                 </td>
             </tr>
-        </table>
+        </table> -->
         <h3 style="margin:20px 0 -5px;"><?php _e('Twitter'); ?></h3>
         <table class="form-table">
             <tr>
@@ -323,10 +323,10 @@ if(isset($_GET['pag']) && $_GET['pag'] == 'shortcode') {
         <h3 style="margin:20px 0 -5px;"><?php _e('Shortcodes'); ?></h3>
         <p><?php _e('Com os Shortcodes a baixo &eacute; poss&iacute;vel exibir o contador de cada op&ccedil;&atilde;o dentro posts ou p&aacute;ginas:'); ?></p>
         <table class="form-table">
-            <tr>
+            <!-- <tr>
                 <th scope="row"><?php _e('Assinantes de feed (FeedBurner)'); ?></th>
                 <td><p><?php _e('<code>[scp code=&quot;feed&quot;]</code>'); ?></p></td>
-            </tr>
+            </tr> -->
             <tr>
                 <th scope="row"><?php _e('Seguidores no Twitter'); ?></th>
                 <td><p><?php _e('<code>[scp code=&quot;twitter&quot;]</code>'); ?></p></td>
@@ -347,10 +347,10 @@ if(isset($_GET['pag']) && $_GET['pag'] == 'shortcode') {
         <h3 style="margin:20px 0 -5px;"><?php _e('Fun&ccedil;&otilde;es'); ?></h3>
         <p><?php _e('A partir destas funções é possível criar novos layouts para o contador diretamente do código fonte de seu tema:'); ?></p>
         <table class="form-table">
-            <tr>
+            <!-- <tr>
                 <th scope="row"><?php _e('Assinantes de feed (FeedBurner)'); ?></th>
                 <td><p><?php _e('<code>&lt;?php echo get_scp_feed(); ?&gt;</code>'); ?></p></td>
-            </tr>
+            </tr> -->
             <tr>
                 <th scope="row"><?php _e('Seguidores no Twitter'); ?></th>
                 <td><p><?php _e('<code>&lt;?php echo get_scp_twitter(); ?&gt;</code>'); ?></p></td>
@@ -470,7 +470,7 @@ function scp_css_head() {
 add_filter('wp_head', 'scp_css_head');
 // Feedburner Count
 function get_scp_feed(){
-    $feed_user = get_option('scp_feed');
+    /*$feed_user = get_option('scp_feed');
     $count = get_transient('feed_count');
     if($count != 0) {
         update_option('scp_feed_cache', $count);
@@ -498,7 +498,8 @@ function get_scp_feed(){
     }
     else {
         $count;
-    }
+    }*/
+    $count = 0;
     return $count;
 }
 // Twitter Count
@@ -534,7 +535,7 @@ function get_scp_facebook(){
     if ($count !== false) return $count;
     $count = 0;
     $data = wp_remote_get("http://api.facebook.com/restserver.php?method=facebook.fql.query&query=SELECT%20fan_count%20FROM%20page%20WHERE%20page_id=$fb_id");
-    if (!is_wp_error($data)) { 
+    if (!is_wp_error($data)) {
         $xml = new SimpleXmlElement($data['body'], LIBXML_NOCDATA);
         $count = (string) $xml->page->fan_count;
     } else {
@@ -581,10 +582,10 @@ function get_scp_comments(){
 }
 // WP Widget
 function get_scp_widget() {
-    $scp_url_feed = 'http://feeds.feedburner.com/' . get_option('scp_feed');
+    //$scp_url_feed = 'http://feeds.feedburner.com/' . get_option('scp_feed');
     $scp_url_twitter = 'http://twitter.com/' . get_option('scp_twitter');
     $scp_url_facebook = 'http://www.facebook.com/' . get_option('scp_facebook');
-    $scp_show_feed = get_option('scp_show_feed');
+    //$scp_show_feed = get_option('scp_show_feed');
     $scp_show_twitter = get_option('scp_show_twitter');
     $scp_show_facebook = get_option('scp_show_facebook');
     $scp_show_posts = get_option('scp_show_posts');
@@ -592,8 +593,7 @@ function get_scp_widget() {
     $li_count = 0;
 ?>
 <ul class="scp-wrap">
-<?php if($scp_show_feed == 'false') { echo ''; } else { ?><li class="scp-feed scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_feed; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_feed(); ?></span><span class="scp-label"><?php _e('assinantes'); ?></span></li><?php }
-if($scp_show_twitter == 'false') { echo ''; } else { ?><li class="scp-twitter scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_twitter; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_twitter(); ?></span><span class="scp-label"><?php _e('seguidores'); ?></span></li><?php }
+<?php if($scp_show_twitter == 'false') { echo ''; } else { ?><li class="scp-twitter scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_twitter; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_twitter(); ?></span><span class="scp-label"><?php _e('seguidores'); ?></span></li><?php }
 if($scp_show_facebook == 'false') { echo ''; } else { ?><li class="scp-facebook scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_facebook; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_facebook(); ?></span><span class="scp-label"><?php _e('fãs'); ?></span></li><?php }
 if($scp_show_posts == 'false') { echo ''; } else { ?><li class="scp-posts scp-box-num-<?php $li_count++; echo $li_count; ?>"><span class="scp-img"></span><span class="scp-count"><?php echo get_scp_posts(); ?></span><span class="scp-label"><?php _e('artigos'); ?></span></li><?php }
 if($scp_show_comment == 'false') { echo ''; } else { ?><li class="scp-comments scp-box-num-<?php $li_count++; echo $li_count; ?>"><span class="scp-img"></span><span class="scp-count"><?php echo get_scp_comments(); ?></span><span class="scp-label"><?php _e('comentários'); ?></span></li><?php }
@@ -635,7 +635,7 @@ class SocialCountPlus extends WP_Widget {
 add_action('widgets_init', create_function('', 'return register_widget("SocialCountPlus");'));
 // Shortcodes
 function scp_shortcodes($atts) {
-    $scp_feed = get_scp_feed();
+    //$scp_feed = get_scp_feed();
     $scp_twitter = get_scp_twitter();
     $scp_facebook = get_scp_facebook();
     $scp_posts = get_scp_posts();
@@ -645,7 +645,7 @@ function scp_shortcodes($atts) {
     ), $atts ) );
     switch ($code) {
         case "feed" :
-            $scp_code = $scp_feed;
+            //$scp_code = $scp_feed;
             break;
         case "twitter" :
             $scp_code = $scp_twitter;
@@ -660,7 +660,7 @@ function scp_shortcodes($atts) {
             $scp_code = $scp_comments;
             break;
         default :
-            $scp_code = $scp_feed;
+            //$scp_code = $scp_feed;
             break;
     }
     return $scp_code;
