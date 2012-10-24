@@ -1,6 +1,6 @@
 === Social Count Plus ===
 Contributors: claudiosanches
-Tags: facebook, twitter, feedburner, counter, widget, shortcode
+Tags: facebook, twitter, counter, widget, shortcode
 Requires at least: 3.2
 Tested up to: 3.4.2
 Stable tag: 1.3
@@ -9,11 +9,11 @@ Com o Social Count Plus &eacute; poss&iacute;vel realizar a de seguidores no Twi
  
 == Description ==
 
-O Social Count Plus realiza a contagem de assinantes de feed (FeedBurner), seguidores do Twitter, f&atilde;s de sua p&aacute;gina no Facebook, total de posts e coment&aacute;rios.
+O Social Count Plus realiza a contagem de seguidores do Twitter, f&atilde;s de sua p&aacute;gina no Facebook, total de posts e coment&aacute;rios.
 &Eacute; poss&iacute;vel exibir estas informa&ccedil;&otilde;es atrav&eacute;s de um Widget  (conta com op&ccedil;&otilde;es de modelos de &iacute;cones) ou por Shortcodes (para serem usados em posts e p&aacute;ginas) ou ainda por fun&ccedil;&otilde;es em PHP.
 Os resultados dos contadores s&atilde;o guardados em cache e novos valores s&atilde;o verificados apenas uma vez por dia.
 Este cache pode ser limpo quando publicado um novo post ou diretamente do menu do plugin em Configura&ccedil;&otilde;es &gt; Social Count Plus.
-O cache n&atilde;o evita apenas que seu blog fique procurando novos resultados toda vez que sua p&aacute;gina &eacute; carregada, como tamb&eacute;m previne queda dos servi&ccedil;os do FeedBurner, Twitter e Facebook, caso um destes servi&ccedil;os n&atilde;o responda, o contador exibe a &uacute;ltima contagem que foi realizada com sucesso.
+O cache n&atilde;o evita apenas que seu blog fique procurando novos resultados toda vez que sua p&aacute;gina &eacute; carregada, como tamb&eacute;m previne queda dos servi&ccedil;os do Twitter e Facebook, caso um destes servi&ccedil;os n&atilde;o responda, o contador exibe a &uacute;ltima contagem que foi realizada com sucesso.
  
 == Installation ==
  
@@ -23,7 +23,6 @@ Agora &eacute; poss&iacute;vel adicionar o Widget do Social Count Plus em seu bl
 
 &Eacute; poss&iacute;vel ainda usar um destes shortcodes para inserir a contagem dentro de posts e p&aacute;ginas:
 
-Assinantes de feed (FeedBurner): `[scp code="feed"]`
 Seguidores no Twitter: `[scp code="twitter"]`
 F&atilde;s do Facebook: `[scp code="facebook"]`
 Total de posts: `[scp code="posts"]`
@@ -31,7 +30,6 @@ Total de coment&aacute;rios: `[scp code="comments"]`
 
 Ou fun&ccedil;&otilde;es em PHP para o seu tema:
 
-Assinantes de feed (FeedBurner): `<?php echo get_scp_feed(); ?>`
 Seguidores no Twitter: `<?php echo get_scp_twitter(); ?>`
 F&atilde;s do Facebook: `<?php echo get_scp_facebook(); ?>`
 Total de posts: `<?php echo get_scp_posts(); ?>`
