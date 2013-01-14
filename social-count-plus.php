@@ -1,669 +1,717 @@
 <?php
-/*
-Plugin Name: Social Count Plus
-Plugin URI: http://www.claudiosmweb.com/
-Description: Exiba a contagem de seguidores no Twitter, fãs do Facebook, total de posts e comentários.
-Author: Claudio Sanches
-Version: 1.3
-Author URI: http://www.claudiosmweb.com/
-*/
+/**
+ * Plugin Name: Social Count Plus
+ * Plugin URI: http://claudiosmweb.com/
+ * Description: Display the counting Twitter followers, Facebook fans, YouTube subscribers posts and comments.
+ * Author: claudiosanches
+ * Author URI: http://claudiosmweb.com/
+ * Version: 2.0
+ * License: GPLv2 or later
+ * Text Domain: socialcountplus
+ * Domain Path: /languages/
+ */
 
-// Criar menu para o plugin no WP
-function add_scp_menu() {
-    add_options_page('Social Count Plus', 'Social Count Plus', 'manage_options', 'social-count-plus', 'admin_scp');
-}
-add_action('admin_menu', 'add_scp_menu');
-// Adicionar opcoes no DB
-function set_scp_options() {
-    add_option('scp_feed','');
-    add_option('scp_twitter','');
-    add_option('scp_facebook','');
-    add_option('scp_show_feed','true');
-    add_option('scp_show_twitter','true');
-    add_option('scp_show_facebook','true');
-    add_option('scp_show_posts','true');
-    add_option('scp_show_comment','true');
-    add_option('scp_layout','default');
-    add_option('scp_feed_cache','0');
-    add_option('scp_twitter_cache','0');
-    add_option('scp_facebook_cache','0');
-}
-// Deleta opcoes quando o plugin &eacute; desinstalado
-function unset_scp_options() {
-    delete_option('scp_feed');
-    delete_option('scp_twitter');
-    delete_option('scp_facebook');
-    delete_option('scp_show_feed');
-    delete_option('scp_show_twitter');
-    delete_option('scp_show_facebook');
-    delete_option('scp_show_posts');
-    delete_option('scp_show_comment');
-    delete_option('scp_layout');
-    delete_option('scp_feed_cache');
-    delete_option('scp_twitter_cache');
-    delete_option('scp_facebook_cache');
-    delete_transient('fan_count');
-    delete_transient('follower_count');
-    delete_transient('feed_count');
-    delete_transient('posts_count');
-    delete_transient('comments_count');
-}
-// instrucoes ao instalar ou desistalar o plugin
-register_activation_hook(__FILE__,'set_scp_options');
-register_deactivation_hook(__FILE__,'unset_scp_options');
-// Pagina de opcoes
-function admin_scp() {
-    ?>
-    <div class="wrap">
-        <div class="icon32" id="icon-options-general"><br /></div>
-        <?php
-        $reset_count = isset($_POST['reset']);
-        if($reset_count == 'limpar') {
-            delete_transient('fan_count');
-            delete_transient('follower_count');
-            //delete_transient('feed_count');
-            delete_transient('posts_count');
-            delete_transient('comments_count');
-            ?><div id="message" class="updated fade">
-            <p><?php _e('O cache foi deletado com sucesso!'); ?></p>
-            </div><?php
+define( 'SOCIAL_COUNT_PLUS_PATH', plugin_dir_path( __FILE__ ) );
+
+class Social_Count_Plus {
+
+    /**
+     * Class construct.
+     */
+    public function __construct( $counter ) {
+        $this->counter = $counter;
+
+        // Load textdomain.
+        add_action( 'plugins_loaded', array( &$this, 'languages' ), 0 );
+
+        // Adds admin menu.
+        add_action( 'admin_menu', array( &$this, 'menu' ) );
+
+        // Init plugin options form.
+        add_action( 'admin_init', array( &$this, 'plugin_settings' ) );
+
+        // Reset transients when save a post.
+        add_action( 'publish_post', array( &$this, 'reset_transients' ) );
+
+        // Scripts.
+        add_action( 'wp_enqueue_scripts', array( &$this, 'scripts' ) );
+
+        // Adds shortcode.
+        add_shortcode( 'scp', array( &$this, 'shortcode' ) );
+
+        // Install default settings.
+        register_activation_hook( __FILE__, array( &$this, 'install' ) );
+    }
+
+    /**
+     * Load translations.
+     */
+    public function languages() {
+        load_plugin_textdomain( 'socialcountplus', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+    }
+
+    /**
+     * Register scripts.
+     */
+    public function scripts() {
+        wp_register_style( 'socialcountplus-style', plugins_url( 'assets/css/counter.css', __FILE__ ), array(), '2.0', 'all' );
+        wp_enqueue_style( 'socialcountplus-style' );
+    }
+
+    /**
+     * Sets default settings
+     *
+     * @return array Plugin default settings.
+     */
+    protected function default_settings() {
+
+        $settings = array(
+            'twitter' => array(
+                'title' => __( 'Twitter', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'twitter_active' => array(
+                'title' => __( 'Display Twitter counter', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'checkbox',
+                'section' => 'twitter',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'twitter_user' => array(
+                'title' => __( 'Twitter username', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'text',
+                'description' => __( 'Insert the Twitter username. Example: ferramentasblog', 'socialcountplus' ),
+                'section' => 'twitter',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'facebook' => array(
+                'title' => __( 'Facebook', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'facebook_active' => array(
+                'title' => __( 'Display Facebook counter', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'checkbox',
+                'section' => 'facebook',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'facebook_id' => array(
+                'title' => __( 'Facebook Page ID', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'text',
+                'description' => __( 'ID Facebook page. Must be the numeric ID.<br />You can find this information clicking to edit your page on facebook. The URL will be similar to this:<br />https://www.facebook.com/pages/edit/?id=<strong>162354720442454</strong>', 'socialcountplus' ),
+                'section' => 'facebook',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'youtube' => array(
+                'title' => __( 'YouTube', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'youtube_active' => array(
+                'title' => __( 'Display YouTube counter', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'checkbox',
+                'section' => 'youtube',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'youtube_user' => array(
+                'title' => __( 'YouTube username', 'socialcountplus' ),
+                'default' => null,
+                'type' => 'text',
+                'description' => __( 'Insert the YouTube username. Example: lemos81', 'socialcountplus' ),
+                'section' => 'youtube',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'posts' => array(
+                'title' => __( 'Posts', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'posts_active' => array(
+                'title' => __( 'Display Posts counter', 'socialcountplus' ),
+                'default' => 1,
+                'type' => 'checkbox',
+                'section' => 'posts',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'comments' => array(
+                'title' => __( 'Comments', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'comments_active' => array(
+                'title' => __( 'Display Comments counter', 'socialcountplus' ),
+                'default' => 1,
+                'type' => 'checkbox',
+                'section' => 'comments',
+                'menu' => 'socialcountplus_settings'
+            ),
+            'design' => array(
+                'title' => __( 'Design', 'socialcountplus' ),
+                'type' => 'section',
+                'menu' => 'socialcountplus_design'
+            ),
+            'models' => array(
+                'title' => __( 'Layout Models', 'socialcountplus' ),
+                'default' => 0,
+                'type' => 'models',
+                'options' => array(
+                    'design-default.png',
+                    'design-default-vertical.png',
+                    'design-circle.png',
+                    'design-circle-vertical.png'
+                ),
+                'section' => 'design',
+                'menu' => 'socialcountplus_design'
+            )
+        );
+
+        return $settings;
+    }
+
+    /**
+     * Installs default settings on plugin activation.
+     */
+    public function install() {
+        $settings = array();
+        $design = array();
+
+        foreach ( $this->default_settings() as $key => $value ) {
+            if ( 'section' != $value['type'] ) {
+                if ( 'socialcountplus_design' == $value['menu'] ) {
+                    $design[ $key ] = $value['default'];
+                } else {
+                    $settings[ $key ] = $value['default'];
+                }
+            }
         }
-        if(!empty($_POST) && check_admin_referer('scp_nonce_action', 'scp_nonce_field') && !$reset_count == 'limpar') {
-            update_scp_options();
-        }
-        print_scp_form();
-        ?>
-    </div>
-    <?php
-}
-// Validar op&ccedil;&otilde;es
-function update_scp_options() {
-    $correto = false;
-    // Feedburner user
-    if (isset($_REQUEST['scp_feed'])) {
-        update_option('scp_feed', $_REQUEST['scp_feed']);
-        $correto = true;
+
+        add_option( 'socialcountplus_settings', $settings );
+        add_option( 'socialcountplus_design', $design );
     }
-    // Twitter user
-    if (isset($_REQUEST['scp_twitter'])) {
-        update_option('scp_twitter', $_REQUEST['scp_twitter']);
-        $correto = true;
-    }
-    // Facebook user
-    if (isset($_REQUEST['scp_facebook'])) {
-        update_option('scp_facebook', $_REQUEST['scp_facebook']);
-        $correto = true;
-    }
-    // Show Feedburner
-    if (isset($_REQUEST['scp_show_feed'])) {
-        update_option('scp_show_feed', $_REQUEST['scp_show_feed']);
-        $correto = true;
-    }
-    // Show Twitter
-    if (isset($_REQUEST['scp_show_twitter'])) {
-        update_option('scp_show_twitter', $_REQUEST['scp_show_twitter']);
-        $correto = true;
-    }
-    // Show Facebook
-    if (isset($_REQUEST['scp_show_facebook'])) {
-        update_option('scp_show_facebook', $_REQUEST['scp_show_facebook']);
-        $correto = true;
-    }
-    // Show Posts
-    if (isset($_REQUEST['scp_show_posts'])) {
-        update_option('scp_show_posts', $_REQUEST['scp_show_posts']);
-        $correto = true;
-    }
-    // Show Comments
-    if (isset($_REQUEST['scp_show_comment'])) {
-        update_option('scp_show_comment', $_REQUEST['scp_show_comment']);
-        $correto = true;
-    }
-    // Layout models
-    if (isset($_REQUEST['scp_layout'])) {
-        update_option('scp_layout', $_REQUEST['scp_layout']);
-        $correto = true;
-    }
-    if ($correto) {
-        ?><div id="message" class="updated fade">
-        <p><?php _e('Op&ccedil;&otilde;es salvas.'); ?></p>
-        </div><?php
-        delete_transient('fan_count');
-        delete_transient('follower_count');
-        //delete_transient('feed_count');
-        delete_transient('posts_count');
-        delete_transient('comments_count');
-    }
-    else {
-        ?><div id="message" class="error fade">
-        <p><?php _e('Erro ao salvar op&ccedil;&otilde;es!'); ?></p>
-        </div><?php
-    }
-}
-// Limpa cache quando publica um novo artigo
-function scp_clear_cache(){
-    delete_transient('fan_count');
-    delete_transient('follower_count');
-    //delete_transient('feed_count');
-    delete_transient('posts_count');
-    delete_transient('comments_count');
-}
-add_action('publish_post', 'scp_clear_cache');
-// Formulario com as opcoes
-function print_scp_form() {
-    $default_feed = get_option('scp_feed');
-    $default_twitter = get_option('scp_twitter');
-    $default_facebook = get_option('scp_facebook');
-    $default_show_feed = get_option('scp_show_feed');
-    $default_show_twitter = get_option('scp_show_twitter');
-    $default_show_facebook = get_option('scp_show_facebook');
-    $default_show_posts = get_option('scp_show_posts');
-    $default_show_comment = get_option('scp_show_comment');
-    $default_layout = get_option('scp_layout');
-    $scp_plugin_dir = get_bloginfo('wpurl') . '/wp-content/plugins/social-count-plus';
-    $scp_blog_dir = get_bloginfo('wpurl');
-    if(!isset($_GET['pag'])) { ?>
-    <h2 class="nav-tab-wrapper">
-        <a class="nav-tab nav-tab-active" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus"><?php _e('Social Count Plus'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=config"><?php _e('Configura&ccedil;&otilde;es'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=design"><?php _e('Design'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=shortcode"><?php _e('Shortcodes e Fun&ccedil;&otilde;es'); ?></a>
-    </h2>
-    <h3 style="margin:20px 0 -5px;"><?php _e('Introdu&ccedil;&atilde;o'); ?></h3>
-    <p><?php _e('Bem vindo ao plugin Social Count Plus.'); ?></p>
-    <p><?php _e('Com o Social Count Plus &eacute; poss&iacute;vel realizar a contagem de assinantes de feed (FeedBurner), seguidores do Twitter, f&atilde;s da sua p&aacute;gina no Facebook, posts publicados e coment&aacute;rios.'); ?></p>
-    <p><?php _e('Sendo poss&iacute;vel mostrar seus resultados atrav&eacute;s de um simples Widget em sua sidebar ou atrav&eacute;s de shortcodes (ou fun&ccedil;&otilde;es em PHP caso seu tema n&atilde;o possua sidebar din&acirc;mica).'); ?></p>
-    <p><?php _e('Todos os dados s&atilde;o guardados em cache que ficam salvos por 24 horas, desta forma impede que seu blog fique lento por causa do Social Count Plus.<br />Este cache &eacute; atualizado toda vez que &eacute; publicado um novo post ou pode ser limpo manualmente atrav&eacute;s do seguinte bot&atilde;o:'); ?></p>
-    <form action="" method="post">
-        <p>
-            <strong style="padding:0 20px 0 0;">Limpar cache do contador:</strong>
-            <?php wp_nonce_field('scp_nonce_action', 'scp_nonce_field'); ?>
-            <input type="submit" class="button-primary" name="reset" value="Limpar" />
-        </p>
-    </form>
-    <h3 style="margin:20px 0 -5px;"><?php _e('Instru&ccedil;&otilde;es de uso'); ?></h3>
-    <p><?php _e('Antes de exibir o contador em seu site/blog é necessário seguir os seguintes passos:'); ?></p>
-    <ul style="list-style:square;padding:0 0 0 30px;">
-        <li><?php _e('Utilize o menu &quot;<a href="options-general.php?page=social-count-plus&pag=config">Configura&ccedil;&otilde;es</a>&quot; para inserir nome de usu&aacute;rio do Twitter, ID de sua p&aacute;gina no Facebook e controlar a exibi&ccedil;&atilde;o de todos os contadores que aparecem no Widget.'); ?></li>
-        <li><?php _e('Em <a href="options-general.php?page=social-count-plus&pag=design">Design</a> selecione o modelo de widget que deseja exibir.'); ?></li>
-        <li><?php _e('Encontre o widget &quot;Social Count Plus&quot; em: Apar&ecirc;ncia &gt; <a href="widgets.php">Widgets</a>. Agora basta arrasta-lo para sua sidebar!'); ?></li>
-    </ul>
-    <p style="padding:0 0 10px;"><?php _e('&Eacute; poss&iacute;vel ainda utilizar <a href="options-general.php?page=social-count-plus&pag=shortcode">Shortcodes e fun&ccedil;&otilde;es</a> em PHP para criar seus pr&oacute;prios modelos de contador ou exibir o qualquer um dos resultados dentro de posts e p&aacute;ginas.'); ?></p>
-<?php
-}
-if(isset($_GET['pag']) && $_GET['pag'] == 'config') {
-?>
-    <h2 class="nav-tab-wrapper">
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus"><?php _e('Social Count Plus'); ?></a>
-        <a class="nav-tab nav-tab-active" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=config"><?php _e('Configura&ccedil;&otilde;es'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=design"><?php _e('Design'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=shortcode"><?php _e('Shortcodes e Fun&ccedil;&otilde;es'); ?></a>
-    </h2>
-    <form action="" method="post">
-        <!-- <h3 style="margin:20px 0 -5px;"><?php _e('FeedBurner'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="scp_feed"><?php _e('ID do FeedBurner'); ?></label></th>
-                <td>
-                    <input type="text" class="regular-text" name="scp_feed" id="scp_feed" value="<?php echo strip_tags($default_feed); ?>" />
-                    <br /><span class="description"><?php _e('&Eacute; poss&iacute;vel encontrar esta informa&ccedil;&atilde;o no final do link de seu FeedBurner:<br />Exemplo: http://feeds.feedburner.com/<strong>ferramentasblog</strong><br/ >Para o perfeito funcionamento do contador &eacute; necess&aacute;rio ativar o &quot;Awareness API&quot; do FeedBurner<br />Ative esta ferramenta logando em <a href="http://feedburner.google.com/" target="_blank">http://feedburner.google.com/</a>, depois de logado selecione seu feed e clique na aba &quot;Publicize&quot;,<br />finalmente selecione o menu &quot;Awareness API&quot; e ative!'); ?></span>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="scp_show_feed_yes"><?php _e('Exibir contador do FeedBurner'); ?></label></th>
-                <td>
-                    <label><input type="radio" id="scp_show_feed_yes" name="scp_show_feed" value="true" <?php if ($default_show_feed == "true") { _e('checked="checked"'); } ?> /> <?php _e('Sim'); ?></label>
-                    <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_feed_no" name="scp_show_feed" value="false" <?php if ($default_show_feed == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
-                </td>
-            </tr>
-        </table> -->
-        <h3 style="margin:20px 0 -5px;"><?php _e('Twitter'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="scp_twitter"><?php _e('Username do Twitter'); ?></label></th>
-                <td>
-                    <input type="text" class="regular-text" name="scp_twitter" id="scp_twitter" value="<?php echo strip_tags($default_twitter); ?>" />
-                    <br /><span class="description"><?php _e('Insira seu nome de usu&aacute;rio do Twitter<br/ >Exemplo: http://twitter.com/<strong>ferramentasblog</strong>'); ?></span>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="scp_show_twitter_yes"><?php _e('Exibir contador do Twitter'); ?></label></th>
-                <td>
-                    <label><input type="radio" id="scp_show_twitter_yes" name="scp_show_twitter" value="true" <?php if ($default_show_twitter == "true") { _e('checked="checked"'); } ?> /> <?php _e('Sim'); ?></label>
-                    <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_twitter_no" name="scp_show_twitter" value="false" <?php if ($default_show_twitter == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
-                </td>
-            </tr>
-        </table>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Facebook'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="scp_facebook"><?php _e('ID do Facebook'); ?></label></th>
-                <td>
-                    <input type="text" class="regular-text" name="scp_facebook" id="scp_facebook" value="<?php echo strip_tags($default_facebook); ?>" />
-                    <br /><span class="description"><?php _e('ID num&eacute;rico da sua p&aacute;gina no Facebook<br />Voc&ecirc; pode encontra-lo clicando em &quot;Editar p&aacute;gina&quot; (no Facebook), onde voc&ecirc; ir&aacute; encontrar uma URL similar a esta:<br /> https://www.facebook.com/pages/edit/?id=<strong>162354720442454</strong>'); ?></span>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="scp_show_facebook_yes"><?php _e('Exibir contador do Facebook'); ?></label></th>
-                <td>
-                    <label><input type="radio" id="scp_show_facebook_yes" name="scp_show_facebook" value="true" <?php if ($default_show_facebook == "true") { _e('checked="checked"'); } ?> /> <?php _e('Sim'); ?></label>
-                    <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_facebook_no" name="scp_show_facebook" value="false" <?php if ($default_show_facebook == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
-                </td>
-            </tr>
-        </table>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Posts'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="scp_show_posts_yes"><?php _e('Exibir contador do Posts'); ?></label></th>
-                <td>
-                    <label><input type="radio" id="scp_show_posts_yes" name="scp_show_posts" value="true" <?php if ($default_show_posts == "true") { _e('checked="checked"'); } ?> /> <?php _e('Sim'); ?></label>
-                    <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_posts_no" name="scp_show_posts" value="false" <?php if ($default_show_posts == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
-                </td>
-            </tr>
-        </table>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Coment&aacute;rios'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="scp_show_comment_yes"><?php _e('Exibir contador do Coment&aacute;rios'); ?></label></th>
-                <td>
-                    <label><input type="radio" id="scp_show_comment_yes" name="scp_show_comment" value="true" <?php if ($default_show_comment == "true") { _e('checked="checked"'); } ?> /> <?php _e('Sim'); ?></label>
-                    <label><input style="margin:0 0 0 10px" type="radio" id="scp_show_comment_no" name="scp_show_comment" value="false" <?php if ($default_show_comment == "false") { _e('checked="checked"'); } ?>/> <?php _e('N&atilde;o'); ?></label>
-                </td>
-            </tr>
-        </table>
-        <p class="submit">
-            <?php wp_nonce_field('scp_nonce_action', 'scp_nonce_field'); ?>
-            <input type="submit" class="button-primary" name="submit" value="Salvar" />
-        </p>
-    </form>
-<?php
-}
-if(isset($_GET['pag']) && $_GET['pag'] == 'design') {
-    ?>
-    <h2 class="nav-tab-wrapper">
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus"><?php _e('Social Count Plus'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=config"><?php _e('Configura&ccedil;&otilde;es'); ?></a>
-        <a class="nav-tab nav-tab-active" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=design"><?php _e('Design'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=shortcode"><?php _e('Shortcodes e Fun&ccedil;&otilde;es'); ?></a>
-    </h2>
-    <form action="" method="post">
-        <h3 style="margin:20px 0 -5px;"><?php _e('Modelos de layout'); ?></h3>
-        <table class="form-table">
-            <tr>
-                <td colspan="2"><p><?php _e('Seleciona uma das op&ccedil;&otilde;es de layout para o widget.<br /><br />Em breve teremos outros formatos de layouts!'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="scp_layout_default"><?php _e('Op&ccedil;&otilde;es de layout'); ?></label></th>
-                <td>
-                    <label style="margin:0;padding:0;display:block"><input type="radio" id="scp_layout_default" name="scp_layout" value="default" <?php if ($default_layout == "default") { _e('checked="checked"'); } ?> /><img style="display:block;margin:-20px 0 30px 20px;" src="<?php echo $scp_plugin_dir; ?>/demo/design-default.png" alt="design default" /></label>
-                    <label style="margin:0;padding:0;display:block"><input type="radio" id="scp_layout_circle" name="scp_layout" value="circle" <?php if ($default_layout == "circle") { _e('checked="checked"'); } ?>/><img style="display:block;margin:-15px 0 30px 20px;" src="<?php echo $scp_plugin_dir; ?>/demo/design-circle.png" alt="design circle" /></label>
-                    <label style="margin:0;padding:0;display:block"><input type="radio" id="scp_layout_vertical-square" name="scp_layout" value="vertical-square" <?php if ($default_layout == "vertical-square") { _e('checked="checked"'); } ?>/><img style="display:block;margin:-18px 0 30px 20px;" src="<?php echo $scp_plugin_dir; ?>/demo/design-vertical-square.png" alt="design vertical square" /></label>
-                    <label style="margin:0;padding:0;display:block"><input type="radio" id="scp_layout_vertical-square" name="scp_layout" value="vertical-circle" <?php if ($default_layout == "vertical-circle") { _e('checked="checked"'); } ?>/><img style="display:block;margin:-15px 0 30px 20px;" src="<?php echo $scp_plugin_dir; ?>/demo/design-vertical-circle.png" alt="design vertical circle" /></label>
-                    <label style="margin:0;padding:0;display:block"><input type="radio" id="scp_layout_none" name="scp_layout" value="none" <?php if ($default_layout == "none") { _e('checked="checked"'); } ?>/>Desligar CSS</label>
-                </td>
-            </tr>
-        </table>
-        <p class="submit">
-            <?php wp_nonce_field('scp_nonce_action', 'scp_nonce_field'); ?>
-            <input type="submit" class="button-primary" name="submit" value="Salvar" />
-        </p>
-    </form>
-<?php
-}
-if(isset($_GET['pag']) && $_GET['pag'] == 'shortcode') {
-    ?>
-    <h2 class="nav-tab-wrapper">
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus"><?php _e('Social Count Plus'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=config"><?php _e('Configura&ccedil;&otilde;es'); ?></a>
-        <a class="nav-tab" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=design"><?php _e('Design'); ?></a>
-        <a class="nav-tab nav-tab-active" href="<?php echo $scp_blog_dir; ?>/wp-admin/options-general.php?page=social-count-plus&pag=shortcode"><?php _e('Shortcodes e Fun&ccedil;&otilde;es'); ?></a>
-    </h2>
-    <form action="" method="post">
-        <p><?php _e('Utilize esta biblioteca de Shortcodes e Fun&ccedil;&otilde;es para gerar seu pr&oacute;prio modelo de layout ou exibir dados espec&iacute;ficos dos contadores.'); ?></p>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Shortcodes'); ?></h3>
-        <p><?php _e('Com os Shortcodes a baixo &eacute; poss&iacute;vel exibir o contador de cada op&ccedil;&atilde;o dentro posts ou p&aacute;ginas:'); ?></p>
-        <table class="form-table">
-            <!-- <tr>
-                <th scope="row"><?php _e('Assinantes de feed (FeedBurner)'); ?></th>
-                <td><p><?php _e('<code>[scp code=&quot;feed&quot;]</code>'); ?></p></td>
-            </tr> -->
-            <tr>
-                <th scope="row"><?php _e('Seguidores no Twitter'); ?></th>
-                <td><p><?php _e('<code>[scp code=&quot;twitter&quot;]</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('F&atilde;s do Facebook'); ?></th>
-                <td><p><?php _e('<code>[scp code=&quot;facebook&quot;]</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('Total de posts'); ?></th>
-                <td><p><?php _e('<code>[scp code=&quot;posts&quot;]</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('Total de coment&aacute;rios'); ?></th>
-                <td><p><?php _e('<code>[scp code=&quot;comments&quot;]</code>'); ?></p></td>
-            </tr>
-        </table>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Fun&ccedil;&otilde;es'); ?></h3>
-        <p><?php _e('A partir destas funções é possível criar novos layouts para o contador diretamente do código fonte de seu tema:'); ?></p>
-        <table class="form-table">
-            <!-- <tr>
-                <th scope="row"><?php _e('Assinantes de feed (FeedBurner)'); ?></th>
-                <td><p><?php _e('<code>&lt;?php echo get_scp_feed(); ?&gt;</code>'); ?></p></td>
-            </tr> -->
-            <tr>
-                <th scope="row"><?php _e('Seguidores no Twitter'); ?></th>
-                <td><p><?php _e('<code>&lt;?php echo get_scp_twitter(); ?&gt;</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('F&atilde;s do Facebook'); ?></th>
-                <td><p><?php _e('<code>&lt;?php echo get_scp_facebook(); ?&gt;</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('Total de posts'); ?></th>
-                <td><p><?php _e('<code>&lt;?php echo get_scp_posts(); ?&gt;</code>'); ?></p></td>
-            </tr>
-            <tr>
-                <th scope="row"><?php _e('Total de coment&aacute;rios'); ?></th>
-                <td><p><?php _e('<code>&lt;?php echo get_scp_comments(); ?&gt;</code>'); ?></p></td>
-            </tr>
-        </table>
-        <h3 style="margin:20px 0 -5px;"><?php _e('Widget via Fun&ccedil;&atilde;o'); ?></h3>
-        <p><?php _e('Use esta fun&ccedil;&atilde;o caso seu tema n&atilde;o tenha sidebar din&acirc;mica. Desta forma voc&ecirc; chama automaticamente o widget &quot;Social Count Plus&quot; direto para o tema:'); ?></p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><?php _e('Widget Social Count Plus'); ?></th>
-                <td><p><?php _e('<code>&lt;?php get_scp_widget(); ?&gt;</code>'); ?></p></td>
-            </tr>
-        </table>
-    </form>
-<?php
-}
-?>
-    <p style="margin:20px 0 0;">
-        <a href="http://www.fbloghost.com/plano-wp-host/" target="_blank" title="FBlogHost - Hospedagem profissional para Worpdress">
-            <img style="border:none;" src="<?php echo $scp_plugin_dir; ?>/fbloghost.jpg" alt="FBlogHost - Hospedagem profissional para Worpdress" />
-        </a>
-    </p>
-<?php
-}
-// JS e CSS do plugin no head
-function scp_css_head() {
-    $scp_layout = get_option('scp_layout');
-    $scp_plugin_dir = get_bloginfo('wpurl') . '/wp-content/plugins/social-count-plus';
-    $layout_default = "<style type=\"text/css\">
-    ul.scp-wrap {list-style:none !important;margin:0;padding:0;}
-    ul.scp-wrap li .scp-img {line-height:16px;margin:0 auto;padding:0;width:32px;height:32px;display:block;background-color:transparent;background-image:url($scp_plugin_dir/images/sprite-default.png);background-repeat:no-repeat;transition:all 0.4s ease;-webkit-transition:all 0.4s ease;-o-transition:all 0.4s ease;-moz-transition:all 0.4s ease;opacity:1;}
-    ul.scp-wrap li .scp-img:hover {opacity:0.7;}
-    ul.scp-wrap li {margin:0;padding:0 0 20px;width:60px;text-align:center;float:left;background:none;clear:none !important}
-    ul.scp-wrap li.scp-feed .scp-img {background-position:0 0;}
-    ul.scp-wrap li.scp-twitter .scp-img {background-position:-32px 0;}
-    ul.scp-wrap li.scp-facebook .scp-img {background-position:-64px 0;}
-    ul.scp-wrap li.scp-posts .scp-img {background-position:-96px 0;}
-    ul.scp-wrap li.scp-comments .scp-img {background-position:-128px 0;}
-    ul.scp-wrap li .scp-count {display:block;color:#333;font-weight:bold;font-size:14px;padding:0;margin:5px 0 0;line-height:16px;}
-    ul.scp-wrap li .scp-label {display:block;text-transform:capitalize;color:#333;font-weight:normal;font-size:9px;padding:0;margin:0;line-height:16px;}
-    .clear {clear:both;}
-</style>\n";
-    $layout_circle = "<style type=\"text/css\">
-    ul.scp-wrap {list-style:none !important;margin:0;padding:0;}
-    ul.scp-wrap li .scp-img {line-height:16px;margin:0 auto;padding:0;width:36px;height:37px;display:block;background-color:transparent;background-image:url($scp_plugin_dir/images/sprite-circle.png);background-repeat:no-repeat;transition:all 0.4s ease;-webkit-transition:all 0.4s ease;-o-transition:all 0.4s ease;-moz-transition:all 0.4s ease;opacity:1;}
-    ul.scp-wrap li .scp-img:hover {opacity:0.7;}
-    ul.scp-wrap li {margin:0;padding:0 0 20px;width:60px;text-align:center;float:left;background:none;clear:none !important}
-    ul.scp-wrap li.scp-feed .scp-img {background-position:0 0;}
-    ul.scp-wrap li.scp-twitter .scp-img {background-position:-36px 0;}
-    ul.scp-wrap li.scp-facebook .scp-img {background-position:-72px 0;}
-    ul.scp-wrap li.scp-posts .scp-img {background-position:-108px 0;}
-    ul.scp-wrap li.scp-comments .scp-img {background-position:-144px 0;}
-    ul.scp-wrap li .scp-count {display:block;color:#333;font-weight:bold;font-size:14px;padding:0;margin:5px 0 0;line-height:16px;}
-    ul.scp-wrap li .scp-label {display:block;text-transform:capitalize;color:#333;font-weight:normal;font-size:9px;padding:0;margin:0;line-height:16px;}
-    .clear {clear:both;}
-</style>\n";
-    $layout_vertical_square = "<style type=\"text/css\">
-    ul.scp-wrap {list-style:none !important;margin:0;padding:0;}
-    ul.scp-wrap li .scp-img {line-height:16px;float:left;margin:0 10px 0 0;padding:0;width:32px;height:32px;display:block;background-color:transparent;background-image:url($scp_plugin_dir/images/sprite-default.png);background-repeat:no-repeat;transition:all 0.4s ease;-webkit-transition:all 0.4s ease;-o-transition:all 0.4s ease;-moz-transition:all 0.4s ease;opacity:1;}
-    ul.scp-wrap li .scp-img:hover {opacity:0.7;}
-    ul.scp-wrap li {margin:0;padding:0 0 20px;height:25px;display:block;background:none;clear:none !important}
-    ul.scp-wrap li.scp-feed .scp-img {background-position:0 0;}
-    ul.scp-wrap li.scp-twitter .scp-img {background-position:-32px 0;}
-    ul.scp-wrap li.scp-facebook .scp-img {background-position:-64px 0;}
-    ul.scp-wrap li.scp-posts .scp-img {background-position:-96px 0;}
-    ul.scp-wrap li.scp-comments .scp-img {background-position:-128px 0;}
-    ul.scp-wrap li .scp-count {display:block;color:#333;font-weight:bold;font-size:14px;padding:0;margin:0;line-height:16px;}
-    ul.scp-wrap li .scp-label {display:block;text-transform:capitalize;color:#333;font-weight:normal;font-size:9px;padding:0;margin:0;line-height:16px;}
-    .clear {clear:both;}
-</style>\n";
-    $layout_vertical_circle = "<style type=\"text/css\">
-    ul.scp-wrap {list-style:none !important;margin:0;padding:0;}
-    ul.scp-wrap li .scp-img {line-height:16px;float:left;margin:0 10px 0 0;padding:0;width:36px;height:37px;display:block;background-color:transparent;background-image:url($scp_plugin_dir/images/sprite-circle.png);background-repeat:no-repeat;transition:all 0.4s ease;-webkit-transition:all 0.4s ease;-o-transition:all 0.4s ease;-moz-transition:all 0.4s ease;opacity:1;}
-    ul.scp-wrap li .scp-img:hover {opacity:0.7;}
-    ul.scp-wrap li {margin:0;padding:0 0 20px;height:25px;display:block;background:none;clear:none !important}
-    ul.scp-wrap li.scp-feed .scp-img {background-position:0 0;}
-    ul.scp-wrap li.scp-twitter .scp-img {background-position:-36px 0;}
-    ul.scp-wrap li.scp-facebook .scp-img {background-position:-72px 0;}
-    ul.scp-wrap li.scp-posts .scp-img {background-position:-108px 0;}
-    ul.scp-wrap li.scp-comments .scp-img {background-position:-144px 0;}
-    ul.scp-wrap li .scp-count {display:block;color:#333;font-weight:bold;font-size:14px;padding:3px 0 0;margin:0;line-height:16px;}
-    ul.scp-wrap li .scp-label {display:block;text-transform:capitalize;color:#333;font-weight:normal;font-size:9px;padding:0;margin:0;line-height:16px;}
-    .clear {clear:both;}
-</style>\n";
-    $layout_none = null;
-    switch ($scp_layout) {
-        case "circle":
-            $scp_layout_final = $layout_circle;
-            break;
-        case "vertical-square":
-            $scp_layout_final = $layout_vertical_square;
-            break;
-        case "vertical-circle":
-            $scp_layout_final = $layout_vertical_circle;
-            break;
-        case "none":
-            $scp_layout_final = $layout_none;
-            break;
-        default :
-            $scp_layout_final = $layout_default;
-            break;
-    }
-    echo $scp_layout_final;
-}
-add_filter('wp_head', 'scp_css_head');
-// Feedburner Count
-function get_scp_feed(){
-    /*$feed_user = get_option('scp_feed');
-    $count = get_transient('feed_count');
-    if($count != 0) {
-        update_option('scp_feed_cache', $count);
-    }
-    if ($count != false) return $count;
-    $count = 0;
-    $data = wp_remote_get("http://feedburner.google.com/api/awareness/1.0/GetFeedData?uri=http://feeds.feedburner.com/$feed_user");
-    if (is_wp_error($data)) {
-        return '0';
-    }
-    else {
-        $body = wp_remote_retrieve_body($data);
-        $xml = new SimpleXMLElement($body);
-        $status = $xml->attributes();
-        if ($status == 'ok') {
-            $count = (string) $xml->feed->entry->attributes()->circulation;
+
+    /**
+     * Update plugin settings.
+     */
+    public function update() {
+        if ( get_option( 'scp_show_twitter' ) ) {
+
+            $settings = array(
+                'twitter_active' => ( 'true' == get_option( 'scp_show_twitter' ) ) ? 1 : '',
+                'twitter_user' => get_option( 'scp_twitter' ),
+                'facebook_active' => ( 'true' == get_option( 'scp_show_facebook' ) ) ? 1 : '',
+                'facebook_id'  => get_option( 'scp_facebook' ),
+                // 'youtube_active' => '',
+                // 'youtube_user' => '',
+                'posts_active' => ( 'true' == get_option( 'scp_show_posts' ) ) ? 1 : '',
+                'comments_active' => ( 'true' == get_option( 'scp_show_comment' ) ) ? 1 : '',
+            );
+
+            $model = 0;
+            switch ( get_option( 'scp_layout' ) ) {
+                case 'vertical-square':
+                    $model = 1;
+                    break;
+                case 'circle':
+                    $model = 2;
+                    break;
+                case 'vertical-circle':
+                    $model = 3;
+                    break;
+
+                default:
+                    $model = 0;
+                    break;
+            }
+
+            $design = array(
+                'models' => $model
+            );
+
+            // Updates options
+            update_option( 'socialcountplus_settings', $settings );
+            update_option( 'socialcountplus_design', $design );
+
+            // Removes old options.
+            delete_option( 'scp_feed');
+            delete_option( 'scp_twitter' );
+            delete_option( 'scp_facebook' );
+            delete_option( 'scp_show_feed' );
+            delete_option( 'scp_show_twitter' );
+            delete_option( 'scp_show_facebook' );
+            delete_option( 'scp_show_posts' );
+            delete_option( 'scp_show_comment' );
+            delete_option( 'scp_layout' );
+            delete_option( 'scp_feed_cache' );
+            delete_option( 'scp_twitter_cache' );
+            delete_option( 'scp_facebook_cache' );
+            delete_transient( 'fan_count' );
+            delete_transient( 'follower_count' );
+            delete_transient( 'feed_count' );
+            delete_transient( 'posts_count' );
+            delete_transient( 'comments_count' );
+
         } else {
-            $count = '0';
+            // Install default options.
+            $this->install();
         }
     }
-    set_transient('feed_count', $count, 60*60*24); // 24 horas de cache
-    if(empty($count)) {
-        $count_old = get_option('scp_feed_cache');
-        $count = $count_old;
+
+    /**
+     * Add plugin settings menu.
+     */
+    public function menu() {
+        add_options_page(
+            __( 'Social Count Plus', 'socialcountplus' ),
+            __( 'Social Count Plus', 'socialcountplus' ),
+            'manage_options',
+            'socialcountplus',
+            array( &$this, 'settings_page' )
+        );
     }
-    else {
-        $count;
-    }*/
-    $count = 0;
-    return $count;
-}
-// Twitter Count
-function get_scp_twitter(){
-    $tw_user = get_option('scp_twitter');
-    $count = get_transient('follower_count');
-    if($count != 0) {
-        update_option('scp_twitter_cache', $count);
-    }
-    if ($count !== false) return $count;
-    $count = 0;
-    $data = wp_remote_get("http://api.twitter.com/1/users/show.json?screen_name=$tw_user");
-    if (!is_wp_error($data)) {
-        $value = json_decode($data['body'],true);
-        if(isset($value['followers_count'])) {
-            $count = $value['followers_count'];
+
+    /**
+     * Plugin settings page.
+     */
+    public function settings_page() {
+        // Create tabs current class.
+        $current_tab = '';
+        if ( isset( $_GET['tab'] ) ) {
+            $current_tab = $_GET['tab'];
+        } else {
+            $current_tab = 'settings';
         }
-    }
-    if($count == '') {
-        $count_old = get_option('scp_twitter_cache');
-        $count = $count_old;
-    }
-    set_transient('follower_count', $count, 60*60*24); // 24 horas de cache
-    return $count;
-}
-// Facebook Count
-function get_scp_facebook(){
-    $fb_id = get_option('scp_facebook');
-    $count = get_transient('fan_count');
-    if($count != 0) {
-        update_option('scp_facebook_cache', $count);
-    }
-    if ($count !== false) return $count;
-    $count = 0;
-    $data = wp_remote_get("http://api.facebook.com/restserver.php?method=facebook.fql.query&query=SELECT%20fan_count%20FROM%20page%20WHERE%20page_id=$fb_id");
-    if (!is_wp_error($data)) {
-        $xml = new SimpleXmlElement($data['body'], LIBXML_NOCDATA);
-        $count = (string) $xml->page->fan_count;
-    } else {
-        $count = 0;
-    }
-    if($count == '') {
-        $count_old = get_option('scp_facebook_cache');
-        $count = $count_old;
-    }
-    set_transient('fan_count', $count, 60*60*24); // 24 horas de cache
-    return $count;
-}
-// Posts Count
-function get_scp_posts(){
-    $count = get_transient('posts_count');
-    if ($count != false) return $count;
-    $count = 0;
-    $count_posts = wp_count_posts();
-    $published_posts = $count_posts->publish;
-    if (is_wp_error($published_posts)) {
-        return '0';
-    }
-    else {
-        $count = $published_posts;
-    }
-    set_transient('posts_count', $count, 60*60*24); // 24 horas de cache
-    return $count;
-}
-// Comments Count
-function get_scp_comments(){
-    $count = get_transient('comments_count');
-    if ($count != false) return $count;
-    $count = 0;
-    $comments_count = wp_count_comments();
-    $approved_comments = $comments_count->approved;
-    if (is_wp_error($approved_comments)) {
-        return '0';
-    }
-    else {
-        $count = $approved_comments;
-    }
-    set_transient('comments', $count, 60*60*24); // 24 hour cache
-    return $count;
-}
-// WP Widget
-function get_scp_widget() {
-    //$scp_url_feed = 'http://feeds.feedburner.com/' . get_option('scp_feed');
-    $scp_url_twitter = 'http://twitter.com/' . get_option('scp_twitter');
-    $scp_url_facebook = 'http://www.facebook.com/' . get_option('scp_facebook');
-    //$scp_show_feed = get_option('scp_show_feed');
-    $scp_show_twitter = get_option('scp_show_twitter');
-    $scp_show_facebook = get_option('scp_show_facebook');
-    $scp_show_posts = get_option('scp_show_posts');
-    $scp_show_comment = get_option('scp_show_comment');
-    $li_count = 0;
-?>
-<ul class="scp-wrap">
-<?php if($scp_show_twitter == 'false') { echo ''; } else { ?><li class="scp-twitter scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_twitter; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_twitter(); ?></span><span class="scp-label"><?php _e('seguidores'); ?></span></li><?php }
-if($scp_show_facebook == 'false') { echo ''; } else { ?><li class="scp-facebook scp-box-num-<?php $li_count++; echo $li_count; ?>"><a href="<?php echo $scp_url_facebook; ?>" target="_blank"><span class="scp-img"></span></a><span class="scp-count"><?php echo get_scp_facebook(); ?></span><span class="scp-label"><?php _e('fãs'); ?></span></li><?php }
-if($scp_show_posts == 'false') { echo ''; } else { ?><li class="scp-posts scp-box-num-<?php $li_count++; echo $li_count; ?>"><span class="scp-img"></span><span class="scp-count"><?php echo get_scp_posts(); ?></span><span class="scp-label"><?php _e('artigos'); ?></span></li><?php }
-if($scp_show_comment == 'false') { echo ''; } else { ?><li class="scp-comments scp-box-num-<?php $li_count++; echo $li_count; ?>"><span class="scp-img"></span><span class="scp-count"><?php echo get_scp_comments(); ?></span><span class="scp-label"><?php _e('comentários'); ?></span></li><?php }
-?>
-</ul>
-<div class="clear"></div>
-<?php
-}
-// Register Widget
-class SocialCountPlus extends WP_Widget {
-    function SocialCountPlus() {
-        $widget_ops = array('social_count_plus' => 'SocialCountPlus', 'description' => 'Exibir contador' );
-        $this->WP_Widget('SocialCountPlus', 'Social Count Plus', $widget_ops);
-    }
-    function form($instance) {
-        $instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
-        $title = $instance['title'];
+
+        // Reset transients when save settings page.
+        if ( isset( $_GET['settings-updated'] ) ) {
+            if ( true == $_GET['settings-updated'] ) {
+                $this->counter->reset_transients();
+            }
+        }
+
         ?>
-        <p><label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:'); ?> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></label></p>
+
+        <div class="wrap">
+            <?php screen_icon( 'options-general' ); ?>
+            <h2 class="nav-tab-wrapper">
+                <a href="admin.php?page=socialcountplus&amp;tab=settings" class="nav-tab <?php echo $current_tab == 'settings' ? 'nav-tab-active' : ''; ?>"><?php _e( 'Settings', 'socialcountplus' ); ?></a><a href="admin.php?page=socialcountplus&amp;tab=design" class="nav-tab <?php echo $current_tab == 'design' ? 'nav-tab-active' : ''; ?>"><?php _e( 'Design', 'socialcountplus' ); ?></a><a href="admin.php?page=socialcountplus&amp;tab=shortcodes" class="nav-tab <?php echo $current_tab == 'shortcodes' ? 'nav-tab-active' : ''; ?>"><?php _e( 'Shortcodes and Functions', 'socialcountplus' ); ?></a>
+            </h2>
+
+            <form method="post" action="options.php">
+                <?php
+                    if ( 'design' == $current_tab ) {
+                        settings_fields( 'socialcountplus_design' );
+                        do_settings_sections( 'socialcountplus_design' );
+                    } else if ( 'shortcodes' == $current_tab ) {
+                        $this->page_shortcodes();
+                    } else {
+                        settings_fields( 'socialcountplus_settings' );
+                        do_settings_sections( 'socialcountplus_settings' );
+                    }
+
+                    if ( 'shortcodes' != $current_tab ) {
+                        submit_button();
+                    }
+                ?>
+            </form>
+        </div>
+
         <?php
     }
-    function update($new_instance, $old_instance) {
-        $instance = $old_instance;
-        $instance['title'] = strip_tags($new_instance['title']);
-        return $instance;
+
+    private function page_shortcodes() {
+        $html = '<p>' . __( 'Use this library to generate your own model layout or display specific data counters.', 'socialcountplus' ) . '</p>';
+
+        $html .= '<h3>' . __( 'Shortcodes', 'socialcountplus' ) . '</h3>';
+
+        $html .= '<table class="form-table">';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Twitter counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>[scp code=&quot;twitter&quot;]</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Facebook counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>[scp code=&quot;facebook&quot;]</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'YouTube counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>[scp code=&quot;youtube&quot;]</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Posts counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>[scp code=&quot;posts&quot;]</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Comments counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>[scp code=&quot;comments&quot;]</code></p></td>';
+            $html .= '</tr>';
+        $html .= '</table>';
+
+        $html .= '<h3>' . __( 'Functions', 'socialcountplus' ) . '</h3>';
+
+        $html .= '<table class="form-table">';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Twitter counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php echo get_scp_twitter(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Facebook counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php echo get_scp_facebook(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'YouTube counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php echo get_scp_youtube(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Posts counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php echo get_scp_posts(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Comments counter', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php echo get_scp_comments(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+            $html .= '<tr>';
+                $html .= '<th scope="row">' . __( 'Full widget', 'socialcountplus' ) . '</th>';
+                $html .= '<td><p><code>&lt;?php get_scp_widget(); ?&gt;</code></p></td>';
+            $html .= '</tr>';
+        $html .= '</table>';
+
+        echo $html;
     }
-    function widget($args, $instance) {
-        extract($args, EXTR_SKIP);
-        echo $before_widget;
-        $title = empty($instance['title']) ? ' ' : apply_filters('widget_title', $instance['title']);
-        if (!empty($title)) {
-            echo $before_title . $title . $after_title;
+
+    /**
+     * Plugin settings form fields.
+     */
+    public function plugin_settings() {
+        $design = 'socialcountplus_design';
+        $settings = 'socialcountplus_settings';
+
+        // Create option in wp_options.
+        if ( false == get_option( $settings ) ) {
+            $this->update();
         }
-        // Display widget
-        echo get_scp_widget();
-        echo $after_widget;
+
+        foreach ( $this->default_settings() as $key => $value ) {
+
+            switch ( $value['type'] ) {
+                case 'section':
+                    add_settings_section(
+                        $key,
+                        $value['title'],
+                        '__return_false',
+                        $value['menu']
+                    );
+                    break;
+                case 'text':
+                    add_settings_field(
+                        $key,
+                        $value['title'],
+                        array( &$this , 'text_element_callback' ),
+                        $value['menu'],
+                        $value['section'],
+                        array(
+                            'menu' => $value['menu'],
+                            'id' => $key,
+                            'class' => 'regular-text',
+                            'description' => isset( $value['description'] ) ? $value['description'] : ''
+                        )
+                    );
+                    break;
+                case 'checkbox':
+                    add_settings_field(
+                        $key,
+                        $value['title'],
+                        array( &$this , 'checkbox_element_callback' ),
+                        $value['menu'],
+                        $value['section'],
+                        array(
+                            'menu' => $value['menu'],
+                            'id' => $key,
+                            'description' => isset( $value['description'] ) ? $value['description'] : ''
+                        )
+                    );
+                    break;
+                case 'models':
+                    add_settings_field(
+                        $key,
+                        $value['title'],
+                        array( &$this , 'models_element_callback' ),
+                        $value['menu'],
+                        $value['section'],
+                        array(
+                            'menu' => $value['menu'],
+                            'id' => $key,
+                            'description' => isset( $value['description'] ) ? $value['description'] : '',
+                            'options' => $value['options']
+                        )
+                    );
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        // Register settings.
+        register_setting( $design, $design, array( &$this, 'validate_options' ) );
+        register_setting( $settings, $settings, array( &$this, 'validate_options' ) );
     }
-}
-add_action('widgets_init', create_function('', 'return register_widget("SocialCountPlus");'));
-// Shortcodes
-function scp_shortcodes($atts) {
-    //$scp_feed = get_scp_feed();
-    $scp_twitter = get_scp_twitter();
-    $scp_facebook = get_scp_facebook();
-    $scp_posts = get_scp_posts();
-    $scp_comments = get_scp_comments();
-    extract( shortcode_atts( array(
-        'code' => 'feed'
-    ), $atts ) );
-    switch ($code) {
-        case "feed" :
-            //$scp_code = $scp_feed;
-            break;
-        case "twitter" :
-            $scp_code = $scp_twitter;
-            break;
-        case "facebook" :
-            $scp_code = $scp_facebook;
-            break;
-        case "posts" :
-            $scp_code = $scp_posts;
-            break;
-        case "comments" :
-            $scp_code = $scp_comments;
-            break;
-        default :
-            //$scp_code = $scp_feed;
-            break;
+
+    /**
+     * Text element fallback.
+     *
+     * @param  array $args Field arguments.
+     *
+     * @return string      Text field.
+     */
+    public function text_element_callback( $args ) {
+        $menu = $args['menu'];
+        $id = $args['id'];
+        $class = isset( $args['class'] ) ? $args['class'] : 'small-text';
+
+        $options = get_option( $menu );
+
+        if ( isset( $options[$id] ) ) {
+            $current = $options[$id];
+        } else {
+            $current = isset( $args['default'] ) ? $args['default'] : '';
+        }
+
+        $html = sprintf( '<input type="text" id="%1$s" name="%2$s[%1$s]" value="%3$s" class="%4$s" />', $id, $menu, $current, $class );
+
+        // Displays option description.
+        if ( isset( $args['description'] ) ) {
+            $html .= sprintf( '<p class="description">%s</p>', $args['description'] );
+        }
+
+        echo $html;
     }
-    return $scp_code;
-}
-add_shortcode('scp', 'scp_shortcodes');
-?>
+
+    /**
+     * Checkbox field fallback.
+     *
+     * @param  array $args Field arguments.
+     *
+     * @return string      Checkbox field.
+     */
+    public function checkbox_element_callback( $args ) {
+        $menu = $args['menu'];
+        $id = $args['id'];
+
+        $options = get_option( $menu );
+
+        if ( isset( $options[$id] ) ) {
+            $current = $options[$id];
+        } else {
+            $current = isset( $args['default'] ) ? $args['default'] : '';
+        }
+
+        $html = sprintf( '<input type="checkbox" id="%1$s" name="%2$s[%1$s]" value="1"%3$s />', $id, $menu, checked( 1, $current, false ) );
+
+        $html .= sprintf( '<label for="%s"> %s</label><br />', $id, __( 'Activate/Deactivate', 'socialcountplus' ) );
+
+        // Displays option description.
+        if ( isset( $args['description'] ) ) {
+            $html .= sprintf( '<p class="description">%s</p>', $args['description'] );
+        }
+
+        echo $html;
+    }
+
+    /**
+     * Models element fallback.
+     *
+     * @param  array $args Field arguments.
+     *
+     * @return string      Models field.
+     */
+    function models_element_callback( $args ) {
+        $menu = $args['menu'];
+        $id = $args['id'];
+
+        $options = get_option( $menu );
+
+        if ( isset( $options[$id] ) ) {
+            $current = $options[$id];
+        } else {
+            $current = isset( $args['default'] ) ? $args['default'] : '#ffffff';
+        }
+
+        $html = '';
+        $key = 0;
+        foreach( $args['options'] as $label ) {
+
+            $html .= sprintf( '<input type="radio" id="%1$s_%2$s_%3$s" name="%1$s[%2$s]" value="%3$s"%4$s style="display: block; float: left; margin: 10px 10px 0 0;" />', $menu, $id, $key, checked( $current, $key, false ) );
+            $html .= sprintf( '<label for="%1$s_%2$s_%3$s"> <img src="%4$s" alt="%1$s_%2$s_%3$s" /></label><br style="clear: both;margin-bottom: 20px;" />', $menu, $id, $key, plugins_url( 'demos/' . $label , __FILE__ ) );
+            $key++;
+        }
+
+        // Displays option description.
+        if ( isset( $args['description'] ) ) {
+            $html .= sprintf( '<p class="description">%s</p>', $args['description'] );
+        }
+
+        echo $html;
+    }
+
+    /**
+     * Valid options.
+     *
+     * @param  array $input options to valid.
+     *
+     * @return array        validated options.
+     */
+    public function validate_options( $input ) {
+        // Create our array for storing the validated options.
+        $output = array();
+
+        // Loop through each of the incoming options.
+        foreach ( $input as $key => $value ) {
+
+            // Check to see if the current option has a value. If so, process it.
+            if ( isset( $input[$key] ) ) {
+
+                // Strip all HTML and PHP tags and properly handle quoted strings.
+                $output[$key] = strip_tags( stripslashes( $input[$key] ) );
+            }
+        }
+
+        // Return the array processing any additional functions filtered by this action.
+        return apply_filters( 'socialcountplus_validate_input', $output, $input );
+    }
+
+    /**
+     * Construct view li element.
+     *
+     * @param  string $slug   Item slug.
+     * @param  string $url    Item url.
+     * @param  int    $count  Item count.
+     * @param  string $title  Item title.
+     *
+     * @return string         HTML li element.
+     */
+    public function get_view_li( $slug, $url, $count, $title ) {
+        $html = sprintf( '<li class="count-%s">', $slug );
+            $html .= sprintf( '<a class="icon" href="%s" target="_blank"></a>', esc_url( $url ) );
+            $html .= '<span class="items">';
+                $html .= sprintf( '<span class="count">%s</span>', $count );
+                $html .= sprintf( '<span class="label">%s</span>', $title );
+            $html .= '</span>';
+        $html .= '</li>';
+
+        return $html;
+    }
+
+    /**
+     * Construct plugin HTML view.
+     *
+     * @return string Plugin HTML view.
+     */
+    public function view() {
+        $settings = get_option( 'socialcountplus_settings' );
+        $design = get_option( 'socialcountplus_design' );
+        $count = $this->counter->update_transients();
+
+        // Sets widget design.
+        $style = '';
+        switch ( $design['models'] ) {
+            case 1:
+                $style = 'default vertical';
+                break;
+            case 2:
+                $style = 'circle';
+                break;
+            case 3:
+                $style = 'circle vertical';
+                break;
+
+            default:
+                $style = 'default';
+                break;
+        }
+
+        $html = '<div class="social-count-plus">';
+            $html .= '<ul class="' . $style . '">';
+
+                // Twitter counter.
+                $html .= ( isset( $settings['twitter_active'] ) ) ? $this->get_view_li( 'twitter', 'http://twitter.com/' . $settings['twitter_user'], $count['twitter'], __( 'followers', 'socialcountplus' ) ) : '';
+
+                // Facebook counter.
+                $html .= ( isset( $settings['facebook_active'] ) ) ? $this->get_view_li( 'facebook', 'http://www.facebook.com/' . $settings['facebook_id'], $count['facebook'], __( 'likes', 'socialcountplus' ) ) : '';
+
+                // YouTube counter.
+                $html .= ( isset( $settings['youtube_user'] ) ) ? $this->get_view_li( 'youtube', 'www.youtube.com/user/' . $settings['youtube_user'], $count['youtube'], __( 'subscribers', 'socialcountplus' ) ) : '';
+
+                // Posts counter.
+                $html .= ( isset( $settings['posts_active'] ) ) ? $this->get_view_li( 'posts', get_home_url(), $count['posts'], __( 'posts', 'socialcountplus' ) ) : '';
+
+                // Comments counter.
+                $html .= ( isset( $settings['comments_active'] ) ) ? $this->get_view_li( 'comments', get_home_url(), $count['comments'], __( 'comments', 'socialcountplus' ) ) : '';
+
+            $html .= '</ul>';
+            $html .= '<div class="clear"></div>';
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Shortcodes;
+     *
+     * @param  array $atts  Shortcode attributes.
+     *
+     * @return int          Count.
+     */
+    public function shortcode( $atts ) {
+        $count = $this->counter->update_transients();
+
+        extract(
+            shortcode_atts(
+                array(
+                    'code' => 'twitter'
+                ),
+                $atts
+            )
+        );
+
+        switch ( $code ) {
+            case 'twitter':
+                $counter = $count['twitter'];
+                break;
+            case 'facebook':
+                $counter = $count['facebook'];
+                break;
+            case 'youtube':
+                $counter = $count['youtube'];
+                break;
+            case 'posts':
+                $counter = $count['posts'];
+                break;
+            case 'comments':
+                $counter = $count['comments'];
+                break;
+            default :
+
+                break;
+        }
+
+        return $counter;
+    }
+
+} // Close Social_Count_Plus class.
+
+// Include classes.
+require_once SOCIAL_COUNT_PLUS_PATH . 'classes/class-widget.php';
+require_once SOCIAL_COUNT_PLUS_PATH . 'classes/class-counter.php';
+
+// Init classes.
+$social_count_plus_counter = new Social_Count_Plus_Counter;
+$social_count_plus = new Social_Count_Plus( $social_count_plus_counter );
+
+// Include functions.
+require_once SOCIAL_COUNT_PLUS_PATH . 'inc/functions.php';

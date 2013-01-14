@@ -1,16 +1,16 @@
-=== Social Count Plus ===
-Contributors: claudiosanches
-Donate link: http://claudiosmweb.com/doacoes/
-Tags: facebook, twitter, youtube, counter, widget, shortcode
-Requires at least: 3.4
-Tested up to: 3.5
-Stable tag: 2.0
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+# Social Count Plus #
+**Contributors:** claudiosanches  
+**Donate link:** http://claudiosmweb.com/doacoes/  
+**Tags:** facebook, twitter, youtube, counter, widget, shortcode  
+**Requires at least:** 3.4  
+**Tested up to:** 3.5  
+**Stable tag:** 2.0  
+**License:** GPLv2 or later  
+**License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
 Display the counting Twitter followers, Facebook fans, YouTube subscribers posts and comments.
 
-== Description ==
+## Description ##
 
 The Social Count Plus performs counting Twitter followers, Facebook fans, YouTube subscribers, posts and comments.
 
@@ -60,7 +60,7 @@ O cache não só evita que o seu blog estar buscando novos resultados cada vez q
 * Comments: `<?php echo get_scp_comments(); ?>`
 * Widget: `<?php get_scp_widget(); ?>`
 
-== Installation ==
+## Installation ##
 
 * Upload plugin files to your plugins folder, or install using WordPress built-in Add New Plugin installer;
 * Activate the plugin;
@@ -72,59 +72,67 @@ O cache não só evita que o seu blog estar buscando novos resultados cada vez q
 * Ative o plugin;
 * Navegue até Configurações -> Social Count Plus e preencha as opções do plugin.
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions ##
 
-= What is the plugin license? =
+### What is the plugin license? ###
 
 * This plugin is released under a GPL license.
 
-= Why the counter Facebook does not leave the ground? =
+### Why the counter Facebook does not leave the ground? ###
 
 * Because you need to have a fan page with more than 15 people in it to run the Facebook API.
 
 ### FAQ em Português: ###
 
-= Qual é a licença do plugin? =
+### Qual é a licença do plugin? ###
 
 * Este plugin esta licenciado como GPL.
 
-= Porque o contador do Facebook não sai do zero? =
+### Porque o contador do Facebook não sai do zero? ###
 
 * Porque você precisa ter uma fã page com mais de 15 pessoas nela para funcionar a API do Facebook.
 
-== Screenshots ==
+## Screenshots ##
 
-1. Plugin settings.
-2. Widget models.
-3. Shortcodes and Functions API page.
-4. Widget.
+### 1. Plugin settings. ###
+![1. Plugin settings.](http://s.wordpress.org/extend/plugins/social-count-plus/screenshot-1.png)
 
-== Changelog ==
+### 2. Widget models. ###
+![2. Widget models.](http://s.wordpress.org/extend/plugins/social-count-plus/screenshot-2.png)
 
-= 2.0 14/01/2013 =
+### 3. Shortcodes and Functions API page. ###
+![3. Shortcodes and Functions API page.](http://s.wordpress.org/extend/plugins/social-count-plus/screenshot-3.png)
+
+### 4. Widget. ###
+![4. Widget.](http://s.wordpress.org/extend/plugins/social-count-plus/screenshot-4.png)
+
+
+## Changelog ##
+
+### 2.0 14/01/2013 ###
 
 * Source code reformulation.
 * Added YouTube counter.
 * Improved performance with fewer options in the database.
 * Added Brazilian Portuguese and English languages.
 
-= 1.3 =
+### 1.3 ###
 
 * Removed support for Feedburner since Google has disabled the [API](https://developers.google.com/feedburner/).
 
-= 1.2 =
+### 1.2 ###
 
 * Free version.
 
-= 1.1 =
+### 1.1 ###
 
 * Final configuration of the plugin.
 
-= 1.0 =
+### 1.0 ###
 
 * Initial release.
 
-== License ==
+## License ##
 
 This file is part of Social Count Plus.
 Social Count Plus is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published
