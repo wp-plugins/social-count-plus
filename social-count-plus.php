@@ -5,7 +5,7 @@
  * Description: Display the counting Twitter followers, Facebook fans, YouTube subscribers posts and comments.
  * Author: claudiosanches, felipesantana
  * Author URI: http://claudiosmweb.com/
- * Version: 2.9.0
+ * Version: 2.9.1
  * License: GPLv2 or later
  * Text Domain: social-count-plus
  * Domain Path: /languages/
@@ -355,7 +355,6 @@ class Social_Count_Plus {
 			),
 			'target_blank' => array(
 				'title' => __( 'Open URLs in new tab/window', 'social-count-plus' ),
-				'default' => 1,
 				'type' => 'checkbox',
 				'section' => 'settings',
 				'menu' => 'socialcountplus_settings',
@@ -363,7 +362,6 @@ class Social_Count_Plus {
 			),
 			'rel_nofollow' => array(
 				'title' => __( 'Add nofollow in URLs', 'social-count-plus' ),
-				'default' => 1,
 				'type' => 'checkbox',
 				'section' => 'settings',
 				'menu' => 'socialcountplus_settings',
@@ -449,7 +447,7 @@ class Social_Count_Plus {
 				'soundcloud_client_id'   => '',
 				'posts_active'           => ( 'true' == get_option( 'scp_show_posts' ) ) ? 1 : '',
 				'comments_active'        => ( 'true' == get_option( 'scp_show_comment' ) ) ? 1 : '',
-				'target_blank'           => 1,
+				// 'target_blank'           => '',
 				// 'rel_nofollow'           => ''
 			);
 
