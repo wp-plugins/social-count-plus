@@ -35,7 +35,7 @@ class Social_Count_Plus_Steam_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return ( isset( $settings['steam_active'] ) && isset( $settings['steam_group_name'] ) && ! empty( $settings['steam_group_name'] ) );
+		return isset( $settings['steam_active'] ) && ! empty( $settings['steam_group_name'] );
 	}
 
 	/**
@@ -48,12 +48,7 @@ class Social_Count_Plus_Steam_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$params = array(
-				'sslverify' => false,
-				'timeout'   => 60
-			);
-
-			$this->connection = wp_remote_get( $this->api_url . $settings['steam_group_name'] . '/memberslistxml/?xml=1', $params );
+			$this->connection = wp_remote_get( $this->api_url . $settings['steam_group_name'] . '/memberslistxml/?xml=1', array( 'timeout' => 60 ) );
 
 			if ( is_wp_error( $this->connection ) || '400' <= $this->connection['response']['code'] ) {
 				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
@@ -70,5 +65,20 @@ class Social_Count_Plus_Steam_Counter extends Social_Count_Plus_Counter {
 		}
 
 		return $this->total;
+	}
+
+	/**
+	 * Get conter view.
+	 *
+	 * @param  array  $settings   Plugin settings.
+	 * @param  int    $total      Counter total.
+	 * @param  string $text_color Text color.
+	 *
+	 * @return string
+	 */
+	public function get_view( $settings, $total, $text_color ) {
+		$steam_group_name = ! empty( $settings['steam_group_name'] ) ? $settings['steam_group_name'] : '';
+
+		return $this->get_view_li( $this->id, 'https://steamcommunity.com/groups/' . $steam_group_name, $total, __( 'members', 'social-count-plus' ), $text_color, $settings );
 	}
 }

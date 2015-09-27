@@ -58,28 +58,274 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Plugin options.
+	 * Get the plugin options.
 	 *
 	 * @return array
 	 */
-	protected static function plugin_options() {
-		$twitter_oauth_description = sprintf( __( 'Create an APP on Twitter in %s and get this information', 'social-count-plus' ), '<a href="https://dev.twitter.com/apps" target="_blank">https://dev.twitter.com/apps</a>' );
+	protected static function get_plugin_options() {
+		$twitter_oauth_description = sprintf( __( 'Create an App on Twitter in %s and get this data.', 'social-count-plus' ), '<a href="https://dev.twitter.com/apps" target="_blank">https://dev.twitter.com/apps</a>' );
 
-		$instagram_access_token = sprintf( __( 'Get the this information in %s', 'social-count-plus' ), '<a href="http://www.pinceladasdaweb.com.br/instagram/access-token/" target="_blank">http://www.pinceladasdaweb.com.br/instagram/access-token/</a>' );
+		$facebook_app_description = sprintf( __( 'Create an App on Facebook in %s and get this data.', 'social-count-plus' ), '<a href="https://developers.facebook.com/" target="_blank">https://developers.facebook.com/</a>' );
+
+		$instagram_access_token = sprintf( __( 'Get the this data in %s.', 'social-count-plus' ), '<a href="https://socialcountplus-instagram.herokuapp.com/" target="_blank">https://socialcountplus-instagram.herokuapp.com/</a>' );
+
+		$tumblr_oauth_description = sprintf( __( 'Register an App on Tumblr in %s, when the app is ready click in "Explore API" and allow your app access your Tumblr account and get this data.', 'social-count-plus' ), '<a href="https://www.tumblr.com/oauth/apps" target="_blank">https://www.tumblr.com/oauth/apps</a>' );
 
 		$settings = array(
 			'socialcountplus_settings' => array(
+				'comments' => array(
+					'title'  => __( 'Comments', 'social-count-plus' ),
+					'fields' => array(
+						'comments_active' => array(
+							'title'   => __( 'Display Comments Counter', 'social-count-plus' ),
+							'default' => true,
+							'type'    => 'checkbox'
+						),
+						'comments_url' => array(
+							'title'   => __( 'URL', 'social-count-plus' ),
+							'default' => get_home_url(),
+							'type'    => 'text'
+						)
+					)
+				),
+				'facebook' => array(
+					'title'  => __( 'Facebook', 'social-count-plus' ),
+					'fields' => array(
+						'facebook_active' => array(
+							'title'   => __( 'Display Facebook Counter', 'social-count-plus' ),
+							'type'    => 'checkbox'
+						),
+						'facebook_id'     => array(
+							'title'       => __( 'Facebook Page ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf(
+								'%s<br />%s<br /><code>https://www.facebook.com/pages/edit/?id=<strong>162354720442454</strong></code> %s <code>https://www.facebook.com/<strong>WordPress</strong></code>.',
+								__( 'ID Facebook page. Must be the numeric ID or your page slug.', 'social-count-plus' ),
+								__( 'You can find this data clicking to edit your page on Facebook. The URL will be similar to this:', 'social-count-plus' ),
+								__( 'or', 'social-count-plus' )
+							)
+						),
+						'facebook_app_id' => array(
+							'title'       => __( 'Facebook App ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $facebook_app_description
+						),
+						'facebook_app_secret' => array(
+							'title'       => __( 'Facebook App Secret', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $facebook_app_description
+						)
+					)
+				),
+				'github' => array(
+					'title'  => __( 'GitHub', 'social-count-plus' ),
+					'fields' => array(
+						'github_active' => array(
+							'title'   => __( 'Display GitHub Counter', 'social-count-plus' ),
+							'type'    => 'checkbox'
+						),
+						'github_username' => array(
+							'title'       => __( 'GitHub Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your GitHub username. Example: %s.', 'social-count-plus' ), '<code>claudiosmweb</code>' )
+						),
+					)
+				),
+				'googleplus' => array(
+					'title'  => __( 'Google+', 'social-count-plus' ),
+					'fields' => array(
+						'googleplus_active' => array(
+							'title' => __( 'Display Google+ Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'googleplus_id' => array(
+							'title'       => __( 'Google+ ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf(
+								'%s<br />%s <code>https://plus.google.com/<strong>106146333300678794719</strong></code> or <code>https://plus.google.com/<strong>+ClaudioSanches</strong></code>',
+								__( 'Google+ page or profile ID.', 'social-count-plus' ),
+								__( 'Example:', 'social-count-plus' )
+							)
+						),
+						'googleplus_api_key' => array(
+							'title'       => __( 'Google API Key', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf(
+								__( 'Get your API key creating a project/app in %s, then inside your project go to "APIs & auth > APIs" and turn on the "Google+ API", finally go to "APIs & auth > APIs > Credentials > Public API access" and click in the "CREATE A NEW KEY" button, select the "Browser key" option and click in the "CREATE" button, now just copy your API key and paste here.', 'social-count-plus' ),
+								'<a href="https://console.developers.google.com/project" target="_blank">https://console.developers.google.com/project</a>'
+							)
+						)
+					)
+				),
+				'instagram' => array(
+					'title'  => __( 'Instagram', 'social-count-plus' ),
+					'fields' => array(
+						'instagram_active' => array(
+							'title' => __( 'Display Instagram Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'instagram_username' => array(
+							'title'       => __( 'Instagram Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => __( 'Insert your Instagram Username.', 'social-count-plus' )
+						),
+						'instagram_user_id' => array(
+							'title'       => __( 'Instagram User ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => __( 'Insert your Instagram User ID.', 'social-count-plus' ) . ' ' . $instagram_access_token
+						),
+						'instagram_access_token' => array(
+							'title'       => __( 'Instagram Access Token', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => __( 'Insert your Instagram Access Token.', 'social-count-plus' ) . ' ' . $instagram_access_token
+						)
+					)
+				),
+				'linkedin' => array(
+					'title'  => __( 'LinkedIn', 'social-count-plus' ),
+					'fields' => array(
+						'linkedin_active' => array(
+							'title' => __( 'Display LinkedIn counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'linkedin_company_id' => array(
+							'title'       => __( 'LinkedIn Company ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your LinkedIn Company ID. Get your Company ID in %s.', 'social-count-plus' ), '<a href="https://socialcountplus-linkedin.herokuapp.com/" target="_blank">https://socialcountplus-linkedin.herokuapp.com/</a>' )
+						),
+						'linkedin_access_token' => array(
+							'title'       => __( 'LinkedIn Access Token', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Get your Access Token in %s.', 'social-count-plus' ), '<a href="https://socialcountplus-linkedin.herokuapp.com/" target="_blank">https://socialcountplus-linkedin.herokuapp.com/</a>' )
+						)
+					)
+				),
+				'pinterest' => array(
+					'title'  => __( 'Pinterest', 'social-count-plus' ),
+					'fields' => array(
+						'pinterest_active' => array(
+							'title' => __( 'Display Pinterest Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'pinterest_username' => array(
+							'title'       => __( 'Pinterest Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your Pinterest username. Example: %s.', 'social-count-plus' ), '<code>claudiosmweb</code>' )
+						)
+					)
+				),
+				'posts' => array(
+					'title'  => __( 'Posts', 'social-count-plus' ),
+					'fields' => array(
+						'posts_active' => array(
+							'title'   => __( 'Display Posts Counter', 'social-count-plus' ),
+							'default' => true,
+							'type'    => 'checkbox'
+						),
+						'posts_post_type' => array(
+							'title'   => __( 'Post Type', 'social-count-plus' ),
+							'default' => 'post',
+							'type'    => 'post_type'
+						),
+						'posts_url' => array(
+							'title'   => __( 'URL', 'social-count-plus' ),
+							'default' => get_home_url(),
+							'type'    => 'text'
+						)
+					)
+				),
+				'soundcloud' => array(
+					'title'  => __( 'SoundCloud', 'social-count-plus' ),
+					'fields' => array(
+						'soundcloud_active' => array(
+							'title' => __( 'Display SoundCloud Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'soundcloud_username' => array(
+							'title'       => __( 'SoundCloud Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => __( 'Insert your SoundCloud Username.', 'social-count-plus' )
+						),
+						'soundcloud_client_id' => array(
+							'title'       => __( 'SoundCloud Client ID', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your SoundCloud App Client ID. Generate this data in %s.', 'social-count-plus' ), '<a href="http://soundcloud.com/you/apps/new" target="_blank">http://soundcloud.com/you/apps/new</a>' )
+						)
+					)
+				),
+				'steam' => array(
+					'title'  => __( 'Steam', 'social-count-plus' ),
+					'fields' => array(
+						'steam_active' => array(
+							'title' => __( 'Display Steam Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'steam_group_name' => array(
+							'title'       => __( 'Steam Group Name', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your Steam Community group name. Example: %s.', 'social-count-plus' ), '<code>DOTALT</code>' )
+						)
+					)
+				),
+				'tumblr' => array(
+					'title'  => __( 'Tumblr', 'social-count-plus' ),
+					'fields' => array(
+						'tumblr_active' => array(
+							'title' => __( 'Display Tumblr counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'tumblr_hostname' => array(
+							'title'       => __( 'Tumblr Hostname', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your Tumblr Hostname. Example: %s.', 'social-count-plus' ), '<code>http://claudiosmweb.tumblr.com/</code>' )
+						),
+						'tumblr_consumer_key' => array(
+							'title'       => __( 'Tumblr Consumer Key', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $tumblr_oauth_description
+						),
+						'tumblr_consumer_secret' => array(
+							'title'       => __( 'Tumblr Consumer Secret', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $tumblr_oauth_description
+						),
+						'tumblr_token' => array(
+							'title'       => __( 'Tumblr Token', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $tumblr_oauth_description
+						),
+						'tumblr_token_secret' => array(
+							'title'       => __( 'Tumblr Token Secret', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => $tumblr_oauth_description
+						)
+					)
+				),
+				'twitch' => array(
+					'title'  => __( 'Twitch', 'social-count-plus' ),
+					'fields' => array(
+						'twitch_active' => array(
+							'title' => __( 'Display Twitch Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'twitch_username' => array(
+							'title'       => __( 'Twitch Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => __( 'Insert your Twitch username.', 'social-count-plus' )
+						)
+					)
+				),
 				'twitter' => array(
 					'title'  => __( 'Twitter', 'social-count-plus' ),
 					'fields' => array(
 						'twitter_active' => array(
-							'title'   => __( 'Display Twitter counter', 'social-count-plus' ),
+							'title'   => __( 'Display Twitter Counter', 'social-count-plus' ),
 							'type'    => 'checkbox'
 						),
 						'twitter_user' => array(
-							'title'       => __( 'Twitter username', 'social-count-plus' ),
+							'title'       => __( 'Twitter Username', 'social-count-plus' ),
 							'type'        => 'text',
-							'description' => __( 'Insert the Twitter username. Example: ferramentasblog', 'social-count-plus' )
+							'description' => sprintf( __( 'Insert the Twitter username. Example: %s.', 'social-count-plus' ), '<code>claudiosmweb</code>' )
 						),
 						'twitter_consumer_key' => array(
 							'title'       => __( 'Twitter Consumer key', 'social-count-plus' ),
@@ -103,17 +349,42 @@ class Social_Count_Plus_Admin {
 						)
 					)
 				),
-				'facebook' => array(
-					'title'  => __( 'Facebook', 'social-count-plus' ),
+				'users' => array(
+					'title'  => __( 'Users', 'social-count-plus' ),
 					'fields' => array(
-						'facebook_active' => array(
-							'title'   => __( 'Display Facebook counter', 'social-count-plus' ),
+						'users_active' => array(
+							'title'   => __( 'Display Users Counter', 'social-count-plus' ),
+							'default' => true,
 							'type'    => 'checkbox'
 						),
-						'facebook_id' => array(
-							'title'   => __( 'Facebook Page ID', 'social-count-plus' ),
-							'type'    => 'text',
-							'description' => __( 'ID Facebook page. Must be the numeric ID.<br />You can find this information clicking to edit your page on Facebook. The URL will be similar to this:<br />https://www.facebook.com/pages/edit/?id=<strong>162354720442454</strong>', 'social-count-plus' )
+						'users_user_role' => array(
+							'title'   => __( 'User Role', 'social-count-plus' ),
+							'default' => 'subscriber',
+							'type'    => 'user_role'
+						),
+						'users_label' => array(
+							'title'   => __( 'Label', 'social-count-plus' ),
+							'default' => __( 'users', 'social-count-plus' ),
+							'type'    => 'text'
+						),
+						'users_url' => array(
+							'title'   => __( 'URL', 'social-count-plus' ),
+							'default' => get_home_url(),
+							'type'    => 'text'
+						)
+					)
+				),
+				'vimeo' => array(
+					'title'  => __( 'Vimeo', 'social-count-plus' ),
+					'fields' => array(
+						'vimeo_active' => array(
+							'title' => __( 'Display Vimeo Counter', 'social-count-plus' ),
+							'type'  => 'checkbox'
+						),
+						'vimeo_username' => array(
+							'title'       => __( 'Vimeo Username', 'social-count-plus' ),
+							'type'        => 'text',
+							'description' => sprintf( __( 'Insert your Vimeo username. Example: %s.', 'social-count-plus' ), '<code>claudiosmweb</code>' )
 						)
 					)
 				),
@@ -121,122 +392,26 @@ class Social_Count_Plus_Admin {
 					'title'  => __( 'YouTube', 'social-count-plus' ),
 					'fields' => array(
 						'youtube_active' => array(
-							'title'   => __( 'Display YouTube counter', 'social-count-plus' ),
+							'title'   => __( 'Display YouTube Counter', 'social-count-plus' ),
 							'type'    => 'checkbox'
 						),
 						'youtube_user' => array(
-							'title'       => __( 'YouTube username', 'social-count-plus' ),
+							'title'       => __( 'YouTube Channel ID', 'social-count-plus' ),
 							'type'        => 'text',
-							'description' => __( 'Insert the YouTube username. Example: UCWGz8KbT5IE7PxhSN1jjimw', 'social-count-plus' )
+							'description' => sprintf( __( 'Insert the YouTube Channel ID. Example: %s.', 'social-count-plus' ), '<code>UCWGz8KbT5IE7PxhSN1jjimw</code>' )
 						),
 						'youtube_url' => array(
 							'title'       => __( 'YouTube Channel URL', 'social-count-plus' ),
 							'type'        => 'text',
-							'description' => __( 'Insert the YouTube channel URL. Example: https://www.youtube.com/channel/UCWGz8KbT5IE7PxhSN1jjimw', 'social-count-plus' )
-						)
-					)
-				),
-				'googleplus' => array(
-					'title'  => __( 'Google+', 'social-count-plus' ),
-					'fields' => array(
-						'googleplus_active' => array(
-							'title' => __( 'Display Google+ counter', 'social-count-plus' ),
-							'type'  => 'checkbox'
+							'description' => sprintf( __( 'Insert the YouTube channel URL. Example: %s.', 'social-count-plus' ), '<code>https://www.youtube.com/user/theclaudiosmweb</code>' )
 						),
-						'googleplus_id' => array(
-							'title'       => __( 'Google+ ID', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Google+ page or profile ID. <br />Example:<br />https://plus.google.com/<strong>115161266310935247804</strong> or https://plus.google.com/<strong>+Ferramentasblog1</strong>', 'social-count-plus' )
-						),
-						'googleplus_api_key' => array(
+						'youtube_api_key' => array(
 							'title'       => __( 'Google API Key', 'social-count-plus' ),
 							'type'        => 'text',
 							'description' => sprintf(
-								__( 'Get your API key creating a project/app in %s, then inside your project go to "APIs & auth > APIs" and turn on the "Google+ API", finally go to "APIs & auth > APIs > Credentials > Public API access" and click in the "CREATE A NEW KEY" button, select the "Browser key" option and click in the "CREATE" button, now just copy your API key and paste here.', 'social-count-plus' ),
-								'<a href="https://console.developers.google.com/project">https://console.developers.google.com/project</a>'
+								__( 'Get your API key creating a project/app in %s, then inside your project go to "APIs & auth > APIs" and turn on the "YouTube API", finally go to "APIs & auth > APIs > Credentials > Public API access" and click in the "CREATE A NEW KEY" button, select the "Browser key" option and click in the "CREATE" button, now just copy your API key and paste here.', 'social-count-plus' ),
+								'<a href="https://console.developers.google.com/project" target="_blank">https://console.developers.google.com/project</a>'
 							)
-						)
-					)
-				),
-				'instagram' => array(
-					'title'  => __( 'Instagram', 'social-count-plus' ),
-					'fields' => array(
-						'instagram_active' => array(
-							'title' => __( 'Display Instagram counter', 'social-count-plus' ),
-							'type'  => 'checkbox'
-						),
-						'instagram_username' => array(
-							'title'       => __( 'Instagram Username', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Insert the Instagram Username.', 'social-count-plus' )
-						),
-						'instagram_user_id' => array(
-							'title'       => __( 'Instagram User ID', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Insert the Instagram User ID.', 'social-count-plus' ) . ' ' . $instagram_access_token
-						),
-						'instagram_access_token' => array(
-							'title'       => __( 'Instagram Access Token', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Insert the Instagram Access Token.', 'social-count-plus' ) . ' ' . $instagram_access_token
-						)
-					)
-				),
-				'steam' => array(
-					'title'  => __( 'Steam', 'social-count-plus' ),
-					'fields' => array(
-						'steam_active' => array(
-							'title' => __( 'Display Steam counter', 'social-count-plus' ),
-							'type'  => 'checkbox'
-						),
-						'steam_group_name' => array(
-							'title'       => __( 'Steam group name', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Insert the Steam Community group name. Example: DOTALT', 'social-count-plus' )
-						)
-					)
-				),
-				'soundcloud' => array(
-					'title'  => __( 'SoundCloud', 'social-count-plus' ),
-					'fields' => array(
-						'soundcloud_active' => array(
-							'title' => __( 'Display SoundCloud counter', 'social-count-plus' ),
-							'type'  => 'checkbox'
-						),
-						'soundcloud_username' => array(
-							'title'       => __( 'SoundCloud Username', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => __( 'Insert the SoundCloud Username.', 'social-count-plus' )
-						),
-						'soundcloud_client_id' => array(
-							'title'       => __( 'SoundCloud Client ID', 'social-count-plus' ),
-							'type'        => 'text',
-							'description' => sprintf( __( 'Insert the SoundCloud APP Client ID. Generate this information in %s', 'social-count-plus' ), '<a href="http://soundcloud.com/you/apps/new" target="_blank">http://soundcloud.com/you/apps/new</a>' )
-						)
-					)
-				),
-				'posts' => array(
-					'title'  => __( 'Posts', 'social-count-plus' ),
-					'fields' => array(
-						'posts_active' => array(
-							'title'   => __( 'Display Posts counter', 'social-count-plus' ),
-							'default' => true,
-							'type'    => 'checkbox'
-						),
-						'posts_post_type' => array(
-							'title'   => __( 'Post type', 'social-count-plus' ),
-							'default' => 'post',
-							'type'    => 'post_type'
-						),
-					)
-				),
-				'comments' => array(
-					'title'  => __( 'Comments', 'social-count-plus' ),
-					'fields' => array(
-						'comments_active' => array(
-							'title'   => __( 'Display Comments counter', 'social-count-plus' ),
-							'default' => true,
-							'type'    => 'checkbox'
 						)
 					)
 				),
@@ -246,12 +421,12 @@ class Social_Count_Plus_Admin {
 						'target_blank' => array(
 							'title'       => __( 'Open URLs in new tab/window', 'social-count-plus' ),
 							'type'        => 'checkbox',
-							'description' => __( 'This option add target="_blank" in all counters URLs.', 'social-count-plus' )
+							'description' => sprintf( __( 'This option add %s in all counters URLs.', 'social-count-plus' ), '<code>target="_blank"</code>' )
 						),
 						'rel_nofollow' => array(
 							'title'       => __( 'Add nofollow in URLs', 'social-count-plus' ),
 							'type'        => 'checkbox',
-							'description' => __( 'This option add rel="nofollow" in all counters URLs.', 'social-count-plus' )
+							'description' => sprintf( __( 'This option add %s in all counters URLs.', 'social-count-plus' ), '<code>rel="nofollow"</code>' )
 						),
 					)
 				)
@@ -264,16 +439,7 @@ class Social_Count_Plus_Admin {
 							'title'   => __( 'Layout Models', 'social-count-plus' ),
 							'default' => '0',
 							'type'    => 'models',
-							'options' => array(
-								'design-default.png',
-								'design-default-vertical.png',
-								'design-circle.png',
-								'design-circle-vertical.png',
-								'design-flat.png',
-								'design-flat-vertical.png',
-								'design-custom.png',
-								'design-custom-vertical.png'
-							)
+							'options' => array( 0 ,1, 2, 3, 4, 5, 6, 7 )
 						),
 						'text_color' => array(
 							'title'   => __( 'Text Color', 'social-count-plus' ),
@@ -295,8 +461,6 @@ class Social_Count_Plus_Admin {
 
 	/**
 	 * Add plugin settings menu.
-	 *
-	 * @return void
 	 */
 	public function settings_menu() {
 		$this->settings_screen = add_options_page(
@@ -351,20 +515,18 @@ class Social_Count_Plus_Admin {
 
 	/**
 	 * Plugin settings form fields.
-	 *
-	 * @return void
 	 */
 	public function plugin_settings() {
 
 		// Process the settings.
-		foreach ( self::plugin_options() as $settings_id => $sections ) {
+		foreach ( self::get_plugin_options() as $settings_id => $sections ) {
 
 			// Create the sections.
 			foreach ( $sections as $section_id => $section ) {
 				add_settings_section(
 					$section_id,
 					$section['title'],
-					'__return_false',
+					array( $this, 'title_element_callback' ),
 					$settings_id
 				);
 
@@ -405,6 +567,20 @@ class Social_Count_Plus_Admin {
 								$field_id,
 								$field['title'],
 								array( $this, 'post_type_element_callback' ),
+								$settings_id,
+								$section_id,
+								array(
+									'tab'         => $settings_id,
+									'id'          => $field_id,
+									'description' => isset( $field['description'] ) ? $field['description'] : ''
+								)
+							);
+							break;
+						case 'user_role':
+							add_settings_field(
+								$field_id,
+								$field['title'],
+								array( $this, 'user_role_element_callback' ),
 								$settings_id,
 								$section_id,
 								array(
@@ -484,11 +660,18 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Text element fallback.
+	 * Title element callback.
 	 *
-	 * @param  array $args Field arguments.
+	 * @param array $args Field arguments.
+	 */
+	public function title_element_callback( $args ) {
+		echo ! empty( $args['id'] ) ? '<div id="section-' . esc_attr( $args['id'] ) . '"></div>' : '';
+	}
+
+	/**
+	 * Text element callback.
 	 *
-	 * @return string      Text field.
+	 * @param array $args Field arguments.
 	 */
 	public function text_element_callback( $args ) {
 		$tab     = $args['tab'];
@@ -507,11 +690,9 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Checkbox field fallback.
+	 * Checkbox field callback.
 	 *
-	 * @param  array $args Field arguments.
-	 *
-	 * @return string      Checkbox field.
+	 * @param array $args Field arguments.
 	 */
 	public function checkbox_element_callback( $args ) {
 		$tab     = $args['tab'];
@@ -530,11 +711,9 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Post Type element fallback.
+	 * Post Type element callback.
 	 *
-	 * @param  array $args Field arguments.
-	 *
-	 * @return string      Post Type field.
+	 * @param array $args Field arguments.
 	 */
 	public function post_type_element_callback( $args ) {
 		$tab     = $args['tab'];
@@ -558,11 +737,38 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Models element fallback.
+	 * User Role element callback.
 	 *
-	 * @param  array $args Field arguments.
+	 * @param array $args Field arguments.
+	 */
+	public function user_role_element_callback( $args ) {
+		global $wp_roles;
+
+		$tab     = $args['tab'];
+		$id      = $args['id'];
+		$default = isset( $args['default'] ) ? $args['default'] : 'subscriber';
+		$current = $this->get_option_value( $id, $default );
+		$html    = '';
+
+		$html = sprintf( '<select id="%1$s" name="%2$s[%1$s]">', $id, $tab );
+		foreach ( $wp_roles->get_names() as $key => $value ) {
+			$html .= sprintf( '<option value="%s"%s>%s</option>', $key, selected( $current, $key, false ), $value );
+		}
+		$html .= sprintf( '<option value="%s"%s>%s</option>', 'all', selected( $current, 'all', false ), __( 'All Roles', 'social-count-plus' ) );
+		$html .= '</select>';
+
+		// Displays option description.
+		if ( isset( $args['description'] ) ) {
+			$html .= sprintf( '<p class="description">%s</p>', $args['description'] );
+		}
+
+		echo $html;
+	}
+
+	/**
+	 * Models element callback.
 	 *
-	 * @return string      Models field.
+	 * @param array $args Field arguments.
 	 */
 	public function models_element_callback( $args ) {
 		$tab     = $args['tab'];
@@ -570,12 +776,26 @@ class Social_Count_Plus_Admin {
 		$default = isset( $args['default'] ) ? $args['default'] : 0;
 		$current = $this->get_option_value( $id, $default );
 		$html    = '';
-		$key     = 0;
 
-		foreach ( $args['options'] as $label ) {
-			$html .= sprintf( '<input type="radio" id="%1$s_%2$s_%3$s" name="%1$s[%2$s]" value="%3$s"%4$s style="display: block; float: left; margin: 10px 10px 0 0;" />', $tab, $id, $key, checked( $current, $key, false ) );
-			$html .= sprintf( '<label for="%1$s_%2$s_%3$s"> <img src="%4$s" alt="%1$s_%2$s_%3$s" /></label><br style="clear: both;margin-bottom: 20px;" />', $tab, $id, $key, plugins_url( 'demos/' . $label, plugin_dir_path( dirname( __FILE__ ) ) ) );
-			$key++;
+		foreach ( $args['options'] as $option ) {
+			$html .= sprintf( '<input type="radio" name="%1$s[%2$s]" class="social-count-plus-model-input" value="%3$s"%4$s />', $tab, $id, $option, checked( $current, $option, false ) );
+
+			$style = Social_Count_Plus_View::get_view_model( $option );
+
+			$html .= '<div class="social-count-plus">';
+				$html .= '<ul class="' . $style . '">';
+
+					foreach ( $this->get_i18n_counters() as $slug => $name ) {
+						$class = 'social_count_plus_' . $slug . '_counter';
+						if ( class_exists( $class ) ) {
+							$_class = new $class();
+
+							$html .= $_class->get_view( array(), 100, '#333333' );
+						}
+					}
+
+				$html .= '</ul>';
+			$html .= '</div>';
 		}
 
 		// Displays option description.
@@ -587,11 +807,9 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Icons order element fallback.
+	 * Icons order element callback.
 	 *
-	 * @param  array $args Field arguments.
-	 *
-	 * @return string      Icons order field.
+	 * @param array $args Field arguments.
 	 */
 	public function icons_order_element_callback( $args ) {
 		$tab       = $args['tab'];
@@ -615,11 +833,9 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
-	 * Color element fallback.
+	 * Color element callback.
 	 *
-	 * @param  array $args Field arguments.
-	 *
-	 * @return string      Color field.
+	 * @param array $args Field arguments.
 	 */
 	public function color_element_callback( $args ) {
 		$tab     = $args['tab'];
@@ -657,8 +873,6 @@ class Social_Count_Plus_Admin {
 
 	/**
 	 * Register admin styles and scripts.
-	 *
-	 * @return void
 	 */
 	public function styles_and_scripts() {
 		$screen = get_current_screen();
@@ -666,6 +880,7 @@ class Social_Count_Plus_Admin {
 		if ( $this->settings_screen && $screen->id === $this->settings_screen ) {
 			$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
+			wp_enqueue_style( 'social-count-plus', plugins_url( 'assets/css/counter.css', plugin_dir_path( dirname( __FILE__ ) ) ), array(), Social_Count_Plus::VERSION, 'all' );
 			wp_enqueue_script( 'wp-color-picker' );
 			wp_enqueue_style( 'wp-color-picker' );
 			wp_enqueue_script( 'jquery-ui-sortable' );
@@ -714,13 +929,19 @@ class Social_Count_Plus_Admin {
 		$cache    = get_option( Social_Count_Plus_Generator::$cache );
 		$content  = '';
 		$counters = apply_filters( 'social_count_plus_counters_test', array(
-			'Social_Count_Plus_Twitter_Counter',
 			'Social_Count_Plus_Facebook_Counter',
-			'Social_Count_Plus_YouTube_Counter',
+			'Social_Count_Plus_GitHub_Counter',
 			'Social_Count_Plus_GooglePlus_Counter',
 			'Social_Count_Plus_Instagram_Counter',
+			'Social_Count_Plus_LinkedIn_Counter',
+			'Social_Count_Plus_Pinterest_Counter',
+			'Social_Count_Plus_SoundCloud_Counter',
 			'Social_Count_Plus_Steam_Counter',
-			'Social_Count_Plus_SoundCloud_Counter'
+			'Social_Count_Plus_Tumblr_Counter',
+			'Social_Count_Plus_Twitch_Counter',
+			'Social_Count_Plus_Twitter_Counter',
+			'Social_Count_Plus_Vimeo_Counter',
+			'Social_Count_Plus_YouTube_Counter',
 		) );
 
 		foreach ( $counters as $counter ) {
@@ -766,8 +987,6 @@ class Social_Count_Plus_Admin {
 
 	/**
 	 * Maybe install.
-	 *
-	 * @return void
 	 */
 	public static function maybe_install() {
 		$version = get_option( 'socialcountplus_version', '0' );
@@ -776,7 +995,7 @@ class Social_Count_Plus_Admin {
 
 			// Install options and updated old versions for 3.0.0.
 			if ( version_compare( $version, '3.0.0', '<' ) ) {
-				foreach ( self::plugin_options() as $settings_id => $sections ) {
+				foreach ( self::get_plugin_options() as $settings_id => $sections ) {
 					$saved = get_option( $settings_id, array() );
 
 					foreach ( $sections as $section_id => $section ) {
@@ -838,6 +1057,32 @@ class Social_Count_Plus_Admin {
 	}
 
 	/**
+	 * Get i18n counters.
+	 *
+	 * @return array
+	 */
+	public function get_i18n_counters() {
+		return apply_filters( 'social_count_plus_icon_name_i18n', array(
+			'comments'   => __( 'Comments', 'social-count-plus' ),
+			'facebook'   => __( 'Facebook', 'social-count-plus' ),
+			'github'     => __( 'GitHub', 'social-count-plus' ),
+			'googleplus' => __( 'Google+', 'social-count-plus' ),
+			'instagram'  => __( 'Instagram', 'social-count-plus' ),
+			'linkedin'   => __( 'LinkedIn', 'social-count-plus' ),
+			'pinterest'  => __( 'Pinterest', 'social-count-plus' ),
+			'posts'      => __( 'Posts', 'social-count-plus' ),
+			'soundcloud' => __( 'SoundCloud', 'social-count-plus' ),
+			'steam'      => __( 'Steam', 'social-count-plus' ),
+			'tumblr'     => __( 'Tumblr', 'social-count-plus' ),
+			'twitch'     => __( 'Twitch', 'social-count-plus' ),
+			'twitter'    => __( 'Twitter', 'social-count-plus' ),
+			'users'      => __( 'Users', 'social-count-plus' ),
+			'vimeo'      => __( 'Vimeo', 'social-count-plus' ),
+			'youtube'    => __( 'YouTube', 'social-count-plus' ),
+		) );
+	}
+
+	/**
 	 * Get icons names.
 	 *
 	 * @param  string $slug
@@ -845,17 +1090,7 @@ class Social_Count_Plus_Admin {
 	 * @return string
 	 */
 	protected function get_icon_name_i18n( $slug ) {
-		$names = array(
-			'twitter'    => __( 'Twitter', 'social-count-plus' ),
-			'facebook'   => __( 'Facebook', 'social-count-plus' ),
-			'youtube'    => __( 'YouTube', 'social-count-plus' ),
-			'googleplus' => __( 'Google+', 'social-count-plus' ),
-			'instagram'  => __( 'Instagram', 'social-count-plus' ),
-			'steam'      => __( 'Steam', 'social-count-plus' ),
-			'soundcloud' => __( 'SoundCloud', 'social-count-plus' ),
-			'posts'      => __( 'Posts', 'social-count-plus' ),
-			'comments'   => __( 'Comments', 'social-count-plus' )
-		);
+		$names = $this->get_i18n_counters();
 
 		if ( ! isset( $names[ $slug ] ) ) {
 			return $slug;

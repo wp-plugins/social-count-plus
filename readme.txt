@@ -1,18 +1,34 @@
 === Social Count Plus ===
-Contributors: claudiosanches, felipesantana
+Contributors: claudiosanches, felipesantana, deblynprado
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Y8HP99ZJ5Z59L
-Tags: facebook, twitter, youtube, google, instagram, soundcloud, steam, counter, widget, shortcode
-Requires at least: 3.8
-Tested up to: 4.2
-Stable tag: 3.0.3
+Tags: counter, widget, shortcode, facebook, github, googleplus, instagram, linkedin, pinterest, soundcloud, steam, tumblr, twitch, twitter, vimeo, youtube
+Requires at least: 4.0
+Tested up to: 4.3
+Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Display the counting data of Twitter, Facebook, Google+, YouTube, Instagram, Steam Community, SoundCloud posts and comments.
+Displays your numbers in Facebook, GitHub, Google+, Instagram, LinkedIn, Pinterest, SoundCloud, Steam Community, Tumblr, Twitch, Twitter, Vimeo, Youtube, posts, comments and users.
 
 == Description ==
 
-The Social Count Plus performs counting Twitter followers, Facebook fans, YouTube subscribers, Google+ page/profile followers, Instagram followers, Steam Community group members, SoundCloud follwers, number of posts and comments.
+The Social Count Plus performs counting for:
+
+- Comments total
+- Facebook page fans
+- GitHub followers
+- Google+ page/profile followers
+- Instagram followers
+- LinkedIn company followers
+- Pinterest followers
+- Posts total
+- SoundCloud follwers
+- Steam Community group members
+- Tumblr followers
+- Twitch channel followers
+- Twitter followers
+- Users total
+- Vimeo followers
 
 You can view this information by a widget (with account options models icons) or Shortcodes (to be used in posts and pages) or PHP functions in your theme.
 
@@ -20,41 +36,9 @@ The results of the counters are cached and new values ​​are checked only onc
 
 The cache avoids not only that your blog be seeking new results every time a page is loaded, but also prevents collapse of services from Twitter and Facebook, if one of these services does not respond, the counter displays the last count it was successful.
 
-#### Shortcodes ####
-
-Displays only the count in plain text:
-
-* Twitter: `[scp code="twitter"]`
-* Facebook: `[scp code="facebook"]`
-* YouTube: `[scp code="youtube"]`
-* Google Plus: `[scp code="googleplus"]`
-* Instagram: `[scp code="instagram"]`
-* Steam: `[scp code="steam"]`
-* SoundCloud: `[scp code="soundcloud"]`
-* Posts: `[scp code="posts"]`
-* Comments: `[scp code="comments"]`
-
-#### Functions ####
-
-Displays only the count in plain text:
-
-* Twitter: `<?php echo get_scp_twitter(); ?>`
-* Facebook: `<?php echo get_scp_facebook(); ?>`
-* YouTube: `<?php echo get_scp_youtube(); ?>`
-* Google Plus: `<?php echo get_scp_googleplus(); ?>`
-* Instagram: `<?php echo get_scp_instagram(); ?>`
-* Steam: `<?php echo get_scp_steam(); ?>`
-* SoundCloud: `<?php echo get_scp_soundcloud(); ?>`
-* Posts: `<?php echo get_scp_posts(); ?>`
-* Comments: `<?php echo get_scp_comments(); ?>`
-
-Displays the widget with icons:
-
-* Widget: `<?php echo get_scp_widget(); ?>`
-
 #### Translate ####
 
-You can contribute to the source code in our [GitHub](https://github.com/claudiosmweb/social-count-plus) page.
+You can contribute to the source code in our [Transifex](https://www.transifex.com/claudiosmweb/social-count-plus/) page.
 
 #### Contribute ####
 
@@ -64,13 +48,49 @@ You can contribute to the source code in our [GitHub](https://github.com/claudio
 
 * Flat icons set, Instagram, SoundCloud and Steam icons by [Felipe Santana](http://wordpress.org/support/profile/felipesantana)
 * Steam counter by [Tadas Krivickas](http://wordpress.org/support/profile/tkrivickas)
-* Instagram access token generator by [Pedro Rogério](http://www.pinceladasdaweb.com.br/)
+* `wp_remote_get()` connection test with [httpbin](https://httpbin.org/)
 
 == Installation ==
 
 * Upload plugin files to your plugins folder, or install using WordPress built-in Add New Plugin installer;
 * Activate the plugin;
 * Navigate to Settings -> Social Count Plus and fill the plugin options.
+
+Some counters depend on third-party APIs to work, follow the next steps to generate API keys for each of them:
+
+= Instagram =
+
+Get your User ID and Access Token in: https://socialcountplus-instagram.herokuapp.com/
+
+= LinkedIn =
+
+Get your Company ID and Access Token in: https://socialcountplus-linkedin.herokuapp.com/
+
+= Facebook =
+
+You must create a Facebook app to use the Facebook Graph API.
+
+Log in https://developers.facebook.com/ and go to "My Apps > Add a New App".
+
+Then follow the steps in this video:
+
+https://www.youtube.com/watch?v=LgavLDh7GPA
+
+Once the App is ready, just copy the App ID and App Secret.
+
+= Google+ and YouTube =
+
+It's required a Google API Key for Google+ and YouTube.
+
+Access https://console.developers.google.com/project to create you Google API key following this steps:
+
+https://www.youtube.com/watch?v=EAQA-tJUWas
+
+= Twitter =
+
+You need access https://dev.twitter.com/apps, then create a Twitter App and copy the Consumer key, Consumer secret, Access token and Access token secret:
+
+https://www.youtube.com/watch?v=26dpo-g_jQc
 
 == Frequently Asked Questions ==
 
@@ -89,14 +109,6 @@ You can test the API key with the following link:
 The answer must contain the following line:
 
 	"circledByCount": XXX,
-
-If you do not find anything related to `circledByCount` means that your API key is incorrect, but do not worry, just follow the steps in this video to generate an valid API key:
-
-https://www.youtube.com/watch?v=kj078EN_hpU
-
-= Why the counter Facebook does not leave the ground? =
-
-* Because you need to have a fan page with more than 15 people in it to run the Facebook API.
 
 = How to changing the amount of times the counter is updated daily? =
 
@@ -119,16 +131,28 @@ Select one of the options without icons in "WordPress admin > Social Count Plus 
 
 The CSS classes you will need to use:
 
-	.social-count-plus .custom .count-twitter a {}
+	.social-count-plus .custom .count-comments a {}
 	.social-count-plus .custom .count-facebook a {}
-	.social-count-plus .custom .count-youtube a {}
+	.social-count-plus .custom .count-github a {}
 	.social-count-plus .custom .count-googleplus a {}
 	.social-count-plus .custom .count-instagram a {}
-	.social-count-plus .custom .count-steam a {}
-	.social-count-plus .custom .count-soundcloud a {}
+	.social-count-plus .custom .count-linkedin a {}
+	.social-count-plus .custom .count-pinterest a {}
 	.social-count-plus .custom .count-posts a {}
-	.social-count-plus .custom .count-comments a {}
+	.social-count-plus .custom .count-soundcloud a {}
+	.social-count-plus .custom .count-steam a {}
+	.social-count-plus .custom .count-tumblr a {}
+	.social-count-plus .custom .count-twitch a {}
+	.social-count-plus .custom .count-twitter a {}
+	.social-count-plus .custom .count-users a {}
+	.social-count-plus .custom .count-vimeo a {}
 
+
+= Having troubles? =
+
+If you have any problems with the numbers, go to the plugin settings and then to the "System Status" tab and click the "Get System Report" button.
+
+Copy the report file content and paste it in [gist.github.com](https://gist.github.com) or [pastebin.com](http://pastebin.com), save and get a link, finally create a topic in our [support forum](https://wordpress.org/support/plugin/social-count-plus).
 
 == Screenshots ==
 
@@ -139,6 +163,38 @@ The CSS classes you will need to use:
 5. Widget.
 
 == Changelog ==
+
+= 3.3.1 - 2015/09/28 =
+
+* Added submenu in settings page.
+
+= 3.3.0 - 2015/09/05 =
+
+* Added option to show all user roles in users integration.
+* Fixed errors in PHP 5.2.
+
+= 3.2.0 - 2015/08/31 =
+
+* Added GitHub integration.
+* Added LinkedIn integration.
+* Added Pinterest integration.
+* Added Tumblr integration.
+* Added Vimeo integration.
+* Added users integration.
+* Added new "URL" options for comments and posts.
+* Improved the Twitch integration.
+
+= 3.1.1 - 2015/08/21 =
+
+* Fixed YouTube options description. Need a YouTube Channel ID and not a YouTube username.
+
+= 3.1.0 - 2015/08/21 =
+
+* Added Twitch integration.
+* Added new `social_count_plus_{$icon}html_counter` and `social_count_plus_icon_name_i18n` filters to help add new custom counters.
+* Fixed Facebook integration, now uses the Facebook API.
+* Fixed Google+ integration, now uses the Google API.
+* Fixed System Status test for `wp_remote_get()`.
 
 = 3.0.3 - 2015/04/21 =
 
@@ -292,10 +348,9 @@ The CSS classes you will need to use:
 
 == Upgrade Notice ==
 
-= 3.0.3 =
+= 3.3.1 =
 
-* Fixed errors in HHVM.
-* Fixed potential XSS vulnerability with add_query_arg().
+* Added submenu in settings page.
 
 == License ==
 

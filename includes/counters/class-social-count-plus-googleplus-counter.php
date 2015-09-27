@@ -35,7 +35,7 @@ class Social_Count_Plus_GooglePlus_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return ( isset( $settings['googleplus_active'] ) && isset( $settings['googleplus_id'] ) && ! empty( $settings['googleplus_id'] ) && isset( $settings['googleplus_api_key'] ) && ! empty( $settings['googleplus_api_key'] ) );
+		return ( isset( $settings['googleplus_active'] ) && ! empty( $settings['googleplus_id'] ) && ! empty( $settings['googleplus_api_key'] ) );
 	}
 
 	/**
@@ -48,14 +48,7 @@ class Social_Count_Plus_GooglePlus_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$id = 'https://plus.google.com/' . $settings['googleplus_id'];
-
-			$params = array(
-				'sslverify' => false,
-				'timeout'   => 60
-			);
-
-			$this->connection = wp_remote_get( $this->api_url . $settings['googleplus_id'] . '?key=' . $settings['googleplus_api_key'], $params );
+			$this->connection = wp_remote_get( $this->api_url . $settings['googleplus_id'] . '?key=' . $settings['googleplus_api_key'], array( 'timeout' => 60 ) );
 
 			if ( is_wp_error( $this->connection ) || '400' <= $this->connection['response']['code'] ) {
 				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
@@ -73,5 +66,20 @@ class Social_Count_Plus_GooglePlus_Counter extends Social_Count_Plus_Counter {
 		}
 
 		return $this->total;
+	}
+
+	/**
+	 * Get conter view.
+	 *
+	 * @param  array  $settings   Plugin settings.
+	 * @param  int    $total      Counter total.
+	 * @param  string $text_color Text color.
+	 *
+	 * @return string
+	 */
+	public function get_view( $settings, $total, $text_color ) {
+		$googleplus_id = ! empty( $settings['googleplus_id'] ) ? $settings['googleplus_id'] : '';
+
+		return $this->get_view_li( $this->id, 'https://plus.google.com/' . $googleplus_id, $total, __( 'followers', 'social-count-plus' ), $text_color, $settings );
 	}
 }

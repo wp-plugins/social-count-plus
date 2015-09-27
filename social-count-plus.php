@@ -2,10 +2,10 @@
 /**
  * Plugin Name: Social Count Plus
  * Plugin URI: https://github.com/claudiosmweb/social-count-plus
- * Description: Display the counting Twitter followers, Facebook fans, YouTube subscribers posts and comments.
- * Author: claudiosanches, felipesantana
+ * Description: Displays your numbers in Facebook, GitHub, Google+, Instagram, LinkedIn, Pinterest, SoundCloud, Steam Community, Tumblr, Twitch, Twitter, Vimeo, Youtube, posts, comments and users.
+ * Author: Claudio Sanches
  * Author URI: http://claudiosmweb.com/
- * Version: 3.0.3
+ * Version: 3.3.1
  * License: GPLv2 or later
  * Text Domain: social-count-plus
  * Domain Path: /languages/
@@ -31,7 +31,7 @@ class Social_Count_Plus {
 	 *
 	 * @var string
 	 */
-	const VERSION = '3.0.3';
+	const VERSION = '3.3.1';
 
 	/**
 	 * Instance of this class.
@@ -80,8 +80,6 @@ class Social_Count_Plus {
 
 	/**
 	 * Load the plugin text domain for translation.
-	 *
-	 * @return void
 	 */
 	public function load_plugin_textdomain() {
 		$locale = apply_filters( 'plugin_locale', get_locale(), 'social-count-plus' );
@@ -99,8 +97,6 @@ class Social_Count_Plus {
 
 	/**
 	 * Include plugin functions.
-	 *
-	 * @return void
 	 */
 	protected function includes() {
 		include_once 'includes/class-social-count-plus-generator.php';
@@ -109,29 +105,20 @@ class Social_Count_Plus {
 		include_once 'includes/class-social-count-plus-widget.php';
 		include_once 'includes/class-social-count-plus-shortcodes.php';
 		include_once 'includes/social-count-plus-functions.php';
+		include_once 'includes/social-count-plus-deprecated-functions.php';
 	}
 
 	/**
 	 * Include counters.
-	 *
-	 * @return void
 	 */
 	protected function include_counters() {
-		include_once 'includes/counters/class-social-count-plus-facebook-counter.php';
-		include_once 'includes/counters/class-social-count-plus-twitter-counter.php';
-		include_once 'includes/counters/class-social-count-plus-youtube-counter.php';
-		include_once 'includes/counters/class-social-count-plus-googleplus-counter.php';
-		include_once 'includes/counters/class-social-count-plus-instagram-counter.php';
-		include_once 'includes/counters/class-social-count-plus-steam-counter.php';
-		include_once 'includes/counters/class-social-count-plus-soundcloud-counter.php';
-		include_once 'includes/counters/class-social-count-plus-posts-counter.php';
-		include_once 'includes/counters/class-social-count-plus-comments-counter.php';
+		foreach ( glob( realpath( dirname( __FILE__ ) ) . '/includes/counters/*.php' ) as $filename ) {
+			include_once $filename;
+		}
 	}
 
 	/**
 	 * Register widget.
-	 *
-	 * @return void
 	 */
 	public function register_widget() {
 		register_widget( 'SocialCountPlus' );
@@ -139,8 +126,6 @@ class Social_Count_Plus {
 
 	/**
 	 * Register public styles and scripts.
-	 *
-	 * @return void
 	 */
 	public function styles_and_scripts() {
 		wp_register_style( 'social-count-plus', plugins_url( 'assets/css/counter.css', __FILE__ ), array(), Social_Count_Plus::VERSION, 'all' );

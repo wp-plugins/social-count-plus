@@ -5,42 +5,41 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Social Count Plus Twitter Counter.
+ * Social Count Plus Tumblr Counter.
  *
- * @package  Social_Count_Plus/Twitter_Counter
+ * @package  Social_Count_Plus/Tumblr_Counter
  * @category Counter
  * @author   Claudio Sanches
  */
-class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
+class Social_Count_Plus_Tumblr_Counter extends Social_Count_Plus_Counter {
 
 	/**
 	 * Counter ID.
 	 *
 	 * @var string
 	 */
-	public $id = 'twitter';
+	public $id = 'tumblr';
 
 	/**
 	 * API URL.
 	 *
 	 * @var string
 	 */
-	protected $api_url = 'https://api.twitter.com/1.1/users/show.json';
+	protected $api_url = 'https://api.tumblr.com/v2/blog/%s/followers';
 
 	/**
 	 * Authorization.
 	 *
-	 * @param  string $user                      Twitter username.
-	 * @param  string $consumer_key              Twitter customer key.
-	 * @param  string $consumer_secret           Twitter customer secret.
+	 * @param  string $hostname                  hostname.
+	 * @param  string $consumer_key              Ccustomer key.
+	 * @param  string $consumer_secret           Customer secret.
 	 * @param  string $oaut_haccess_token        OAuth access token.
 	 * @param  string $oauth_access_token_secret OAuth access token secret.
 	 *
 	 * @return string
 	 */
-	protected function authorization( $user, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret ) {
-		$query     = 'screen_name=' . $user;
-		$signature = $this->signature( $query, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret );
+	protected function authorization( $hostname, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret ) {
+		$signature = $this->signature( $hostname, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret );
 
 		return $this->header( $signature );
 	}
@@ -55,7 +54,7 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 	 *
 	 * @return string          OAuth Signature base.
 	 */
-	private function signature_base_string( $url, $query, $method, $params ) {
+	private function signature_base_string( $url, $method, $params ) {
 		$return = array();
 		ksort( $params );
 
@@ -63,13 +62,13 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 			$return[] = $key . '=' . $value;
 		}
 
-		return $method . '&' . rawurlencode( $url ) . '&' . rawurlencode( implode( '&', $return ) ) . '%26' . rawurlencode( $query );
+		return $method . '&' . rawurlencode( $url ) . '&' . rawurlencode( implode( '&', $return ) );
 	}
 
 	/**
 	 * Build the OAuth Signature.
 	 *
-	 * @param  string $query                     Request query.
+	 * @param  string $hostname                  hostname.
 	 * @param  string $consumer_key              Twitter customer key.
 	 * @param  string $consumer_secret           Twitter customer secret.
 	 * @param  string $oauth_access_token        OAuth access token.
@@ -77,7 +76,7 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 	 *
 	 * @return array                             OAuth signature params.
 	 */
-	private function signature( $query, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret ) {
+	private function signature( $hostname, $consumer_key, $consumer_secret, $oauth_access_token, $oauth_access_token_secret ) {
 		$oauth = array(
 			'oauth_consumer_key'     => $consumer_key,
 			'oauth_nonce'            => hash_hmac( 'sha1', time(), '1', false ),
@@ -87,7 +86,7 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 			'oauth_version'          => '1.0'
 		);
 
-		$base_info = $this->signature_base_string( $this->api_url, $query, 'GET', $oauth );
+		$base_info = $this->signature_base_string( sprintf( $this->api_url, $hostname ), 'GET', $oauth );
 		$composite_key = rawurlencode( $consumer_secret ) . '&' . rawurlencode( $oauth_access_token_secret );
 		$oauth_signature = base64_encode( hash_hmac( 'sha1', $base_info, $composite_key, true ) );
 		$oauth['oauth_signature'] = $oauth_signature;
@@ -123,7 +122,7 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return ( isset( $settings['twitter_active'] ) && ! empty( $settings['twitter_user'] ) && ! empty( $settings['twitter_consumer_key'] ) && ! empty( $settings['twitter_consumer_secret'] ) && ! empty( $settings['twitter_access_token'] ) && ! empty( $settings['twitter_access_token_secret'] ) );
+		return isset( $settings['tumblr_active'] ) && ! empty( $settings['tumblr_hostname'] ) && ! empty( $settings['tumblr_consumer_key'] ) && ! empty( $settings['tumblr_consumer_secret'] ) && ! empty( $settings['tumblr_token'] ) && ! empty( $settings['tumblr_token_secret'] );
 	}
 
 	/**
@@ -136,7 +135,7 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$user = $settings['twitter_user'];
+			$hostname = str_replace( array( 'http:', 'https:', '/' ), '', sanitize_text_field( $settings['tumblr_hostname'] ) );
 
 			$params = array(
 				'method'    => 'GET',
@@ -144,24 +143,24 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 				'headers'   => array(
 					'Content-Type'  => 'application/x-www-form-urlencoded',
 					'Authorization' => $this->authorization(
-						$user,
-						$settings['twitter_consumer_key'],
-						$settings['twitter_consumer_secret'],
-						$settings['twitter_access_token'],
-						$settings['twitter_access_token_secret']
+						$hostname,
+						$settings['tumblr_consumer_key'],
+						$settings['tumblr_consumer_secret'],
+						$settings['tumblr_token'],
+						$settings['tumblr_token_secret']
 					)
 				)
 			);
 
-			$this->connection = wp_remote_get( $this->api_url . '?screen_name=' . $user, $params );
+			$this->connection = wp_remote_get( sprintf( $this->api_url, $hostname ), $params );
 
-			if ( is_wp_error( $this->connection ) ) {
+			if ( is_wp_error( $this->connection ) || ( isset( $this->connection['response']['code'] ) && 200 != $this->connection['response']['code'] ) ) {
 				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
 			} else {
 				$_data = json_decode( $this->connection['body'], true );
 
-				if ( isset( $_data['followers_count'] ) ) {
-					$count = intval( $_data['followers_count'] );
+				if ( isset( $_data['response']['total_users'] ) ) {
+					$count = intval( $_data['response']['total_users'] );
 
 					$this->total = $count;
 				} else {
@@ -183,8 +182,8 @@ class Social_Count_Plus_Twitter_Counter extends Social_Count_Plus_Counter {
 	 * @return string
 	 */
 	public function get_view( $settings, $total, $text_color ) {
-		$twitter_user = ! empty( $settings['twitter_user'] ) ? $settings['twitter_user'] : '';
+		$tumblr_hostname = ! empty( $settings['tumblr_hostname'] ) ? $settings['tumblr_hostname'] : '';
 
-		return $this->get_view_li( $this->id, 'https://twitter.com/' . $twitter_user, $total, __( 'followers', 'social-count-plus' ), $text_color, $settings );
+		return $this->get_view_li( $this->id, $tumblr_hostname, $total, __( 'followers', 'social-count-plus' ), $text_color, $settings );
 	}
 }

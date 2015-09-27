@@ -5,27 +5,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Social Count Plus YouTube Counter.
+ * Social Count Plus Vimeo Counter.
  *
- * @package  Social_Count_Plus/YouTube_Counter
+ * @package  Social_Count_Plus/Vimeo_Counter
  * @category Counter
  * @author   Claudio Sanches
  */
-class Social_Count_Plus_YouTube_Counter extends Social_Count_Plus_Counter {
+class Social_Count_Plus_Vimeo_Counter extends Social_Count_Plus_Counter {
 
 	/**
 	 * Counter ID.
 	 *
 	 * @var string
 	 */
-	public $id = 'youtube';
+	public $id = 'vimeo';
 
 	/**
 	 * API URL.
 	 *
 	 * @var string
 	 */
-	protected $api_url = 'https://www.googleapis.com/youtube/v3/channels';
+	protected $api_url = 'https://vimeo.com/api/v2/%s/info.json';
 
 	/**
 	 * Test the counter is available.
@@ -35,7 +35,7 @@ class Social_Count_Plus_YouTube_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return isset( $settings['youtube_active'] ) && ! empty( $settings['youtube_user'] ) && ! empty( $settings['youtube_api_key'] );
+		return isset( $settings['vimeo_active'] ) && ! empty( $settings['vimeo_username'] );
 	}
 
 	/**
@@ -48,22 +48,15 @@ class Social_Count_Plus_YouTube_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$url = sprintf(
-				'%s?part=statistics&id=%s&key=%s',
-				$this->api_url,
-				sanitize_text_field( $settings['youtube_user'] ),
-				sanitize_text_field( $settings['youtube_api_key'] )
-			);
+			$this->connection = wp_remote_get( sprintf( $this->api_url, sanitize_text_field( $settings['vimeo_username'] ) ), array( 'timeout' => 60 ) );
 
-			$this->connection = wp_remote_get( $url, array( 'timeout' => 60 ) );
-
-			if ( is_wp_error( $this->connection ) || 400 <= $this->connection['response']['code'] ) {
+			if ( is_wp_error( $this->connection ) || 200 != $this->connection['response']['code'] ) {
 				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
 			} else {
 				$_data = json_decode( $this->connection['body'], true );
 
-				if ( isset( $_data['items'][0]['statistics']['subscriberCount'] ) ) {
-					$count = intval( $_data['items'][0]['statistics']['subscriberCount'] );
+				if ( isset( $_data['total_contacts'] ) ) {
+					$count = intval( $_data['total_contacts'] );
 
 					$this->total = $count;
 				} else {
@@ -85,8 +78,8 @@ class Social_Count_Plus_YouTube_Counter extends Social_Count_Plus_Counter {
 	 * @return string
 	 */
 	public function get_view( $settings, $total, $text_color ) {
-		$youtube_url = ! empty( $settings['youtube_url'] ) ? $settings['youtube_url'] : '';
+		$vimeo_username = ! empty( $settings['vimeo_username'] ) ? $settings['vimeo_username'] : '';
 
-		return $this->get_view_li( $this->id, $youtube_url, $total, __( 'subscribers', 'social-count-plus' ), $text_color, $settings );
+		return $this->get_view_li( $this->id, 'https://vimeo.com/' . $vimeo_username, $total, __( 'followers', 'social-count-plus' ), $text_color, $settings );
 	}
 }

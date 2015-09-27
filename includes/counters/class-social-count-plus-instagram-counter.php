@@ -35,7 +35,7 @@ class Social_Count_Plus_Instagram_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return ( isset( $settings['instagram_active'] ) && isset( $settings['instagram_user_id'] ) && ! empty( $settings['instagram_user_id'] ) && isset( $settings['instagram_access_token'] ) && ! empty( $settings['instagram_access_token'] ) );
+		return ( isset( $settings['instagram_active'] ) && ! empty( $settings['instagram_user_id'] ) && ! empty( $settings['instagram_access_token'] ) );
 	}
 
 	/**
@@ -48,12 +48,7 @@ class Social_Count_Plus_Instagram_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$params = array(
-				'sslverify' => false,
-				'timeout'   => 60
-			);
-
-			$this->connection = wp_remote_get( $this->api_url . $settings['instagram_user_id'] . '/?access_token=' . $settings['instagram_access_token'], $params );
+			$this->connection = wp_remote_get( $this->api_url . $settings['instagram_user_id'] . '/?access_token=' . $settings['instagram_access_token'], array( 'timeout' => 60 ) );
 
 			if ( is_wp_error( $this->connection ) || '400' <= $this->connection['response']['code'] ) {
 				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
@@ -75,5 +70,20 @@ class Social_Count_Plus_Instagram_Counter extends Social_Count_Plus_Counter {
 		}
 
 		return $this->total;
+	}
+
+	/**
+	 * Get conter view.
+	 *
+	 * @param  array  $settings   Plugin settings.
+	 * @param  int    $total      Counter total.
+	 * @param  string $text_color Text color.
+	 *
+	 * @return string
+	 */
+	public function get_view( $settings, $total, $text_color ) {
+		$instagram_username = ! empty( $settings['instagram_username'] ) ? $settings['instagram_username'] : '';
+
+		return $this->get_view_li( $this->id, 'https://instagram.com/' . $instagram_username, $total, __( 'followers', 'social-count-plus' ), $text_color, $settings );
 	}
 }

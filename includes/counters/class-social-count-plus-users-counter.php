@@ -5,20 +5,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Social Count Plus Posts Counter.
+ * Social Count Plus Users Counter.
  *
- * @package  Social_Count_Plus/Posts_Counter
+ * @package  Social_Count_Plus/Users_Counter
  * @category Counter
  * @author   Claudio Sanches
  */
-class Social_Count_Plus_Posts_Counter extends Social_Count_Plus_Counter {
+class Social_Count_Plus_Users_Counter extends Social_Count_Plus_Counter {
 
 	/**
 	 * Counter ID.
 	 *
 	 * @var string
 	 */
-	public $id = 'posts';
+	public $id = 'users';
 
 	/**
 	 * API URL.
@@ -35,7 +35,7 @@ class Social_Count_Plus_Posts_Counter extends Social_Count_Plus_Counter {
 	 * @return bool
 	 */
 	public function is_available( $settings ) {
-		return ( isset( $settings['posts_active'] ) );
+		return isset( $settings['users_active'] ) && ! empty( $settings['users_user_role'] );
 	}
 
 	/**
@@ -48,15 +48,14 @@ class Social_Count_Plus_Posts_Counter extends Social_Count_Plus_Counter {
 	 */
 	public function get_total( $settings, $cache ) {
 		if ( $this->is_available( $settings ) ) {
-			$post_type = ( isset( $settings['posts_post_type'] ) && ! empty( $settings['posts_post_type'] ) ) ? $settings['posts_post_type'] : 'posts';
-			$data      = wp_count_posts( $post_type );
+			$users = count_users();
 
-			if ( is_wp_error( $data ) ) {
-				$this->total = ( isset( $cache[ $this->id ] ) ) ? $cache[ $this->id ] : 0;
+			if ( 'all' == $settings['users_user_role'] ) {
+				$this->total = intval( $users['total_users'] );
+			} else if ( ! empty( $users['avail_roles'][ $settings['users_user_role'] ] ) ) {
+				$this->total = intval( $users['avail_roles'][ $settings['users_user_role'] ] );
 			} else {
-				$count = intval( $data->publish );
-
-				$this->total = $count;
+				$this->total = 0;
 			}
 		}
 
@@ -73,13 +72,12 @@ class Social_Count_Plus_Posts_Counter extends Social_Count_Plus_Counter {
 	 * @return string
 	 */
 	public function get_view( $settings, $total, $text_color ) {
-		$post_type   = ( isset( $settings['posts_post_type'] ) && ! empty( $settings['posts_post_type'] ) ) ? $settings['posts_post_type'] : 'post';
-		$post_object = get_post_type_object( $post_type );
-		$url         = ! empty( $settings['posts_url'] ) ? $settings['posts_url'] : get_home_url();
+		$url   = ! empty( $settings['users_url'] ) ? $settings['users_url'] : get_home_url();
+		$label = ! empty( $settings['users_label'] ) ? $settings['users_label'] : __( 'users', 'social-count-plus' );
 
 		unset( $settings['target_blank'] );
 		unset( $settings['rel_nofollow'] );
 
-		return $this->get_view_li( $this->id, $url, $total, strtolower( $post_object->label ), $text_color, $settings );
+		return $this->get_view_li( $this->id, $url, $total, $label, $text_color, $settings );
 	}
 }
